@@ -222,7 +222,7 @@
   <!-- ================= HOY ================= -->
   <div class="page on" id="p-hoy">
     <div class="topbar">
-      <div><div class="hi" id="h-date"></div><h2 id="h-greet">Hola, Balbina 🌸</h2></div>
+      <div><div class="hi"><span id="h-date"></span> · <span id="savebadge" style="font-size:11px"></span></div><h2 id="h-greet">Hola, Balbina 🌸</h2></div>
       <button class="icbtn ghost" onclick="openSheet('sheet-set')">⚙︎</button>
       <button class="icbtn" onclick="newHabit()">＋</button>
     </div>
@@ -543,6 +543,10 @@
   <button class="ghostbtn" onclick="askNotif()" style="margin-top:0">🔔 Activar notificaciones</button>
   <div class="f-hint">iOS solo permite avisos de una web app instalada, y no siempre con la app cerrada. Para lo que no puedes fallar, usa también Recordatorios.</div>
 
+  <h4>Estado del guardado</h4>
+  <div id="diag" class="card" style="margin:0"></div>
+  <button class="ghostbtn" onclick="testSave()">🧪 Probar que sí guarda</button>
+
   <h4>Respaldo</h4>
   <button class="ghostbtn" onclick="exportData()" style="margin-top:0">⬇️ Copiar respaldo (JSON)</button>
   <button class="ghostbtn" onclick="importData()">⬆️ Restaurar desde respaldo</button>
@@ -820,15 +824,106 @@ function seed(){
     set:{clen:28,bleed:5,prot:115,kcal:1400,steps:5120,waterQ:10,fastH:4,mealMin:20,wday:2,wdose:'0.25 mg',sync:0,synccyc:0},
     wegovy:['2026-08-04','2026-08-11']};
 }
-let S;
-try{ S=JSON.parse(localStorage.getItem(KEY))||seed(); }catch(e){ S=seed(); }
-if(!S||!S.habits) S=seed();
-if(!S.read) S.read=[];
-if(!S.photos) S.photos=[];
-if(S.set.bleed==null) S.set.bleed=5;
-if(S.set.sync==null) S.set.sync=0;
-if(S.set.mealMin==null) S.set.mealMin=20;
-function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Sin espacio: borra fotos viejas');} }
+/* ============ ALMACENAMIENTO ============
+   Los datos se guardan por separado para que una foto pesada NUNCA
+   pueda tumbar el guardado de tus hábitos, comidas o InBody.
+   - núcleo (texto, pequeño): localStorage + IndexedDB
+   - fotos (pesadas): IndexedDB, con localStorage como respaldo si cabe
+   Cada escritura se vuelve a leer para confirmar que de verdad quedó. */
+const CORE='fj_core_v2', PHOTOS='fj_photos_v2';
+let SAVED={core:null, photos:null, err:null, at:null};
+
+let _db=null;
+function idb(){ return new Promise((res,rej)=>{ if(_db)return res(_db);
+  if(!window.indexedDB) return rej('no-idb');
+  const r=indexedDB.open('fitjourney',1);
+  r.onupgradeneeded=()=>{ const d=r.result; if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };
+  r.onsuccess=()=>{ _db=r.result; res(_db); }; r.onerror=()=>rej(r.error); }); }
+function idbPut(k,v){ return idb().then(d=>new Promise((res,rej)=>{
+  const t=d.transaction('kv','readwrite'); t.objectStore('kv').put(v,k);
+  t.oncomplete=()=>res(true); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); })); }
+function idbGet(k){ return idb().then(d=>new Promise((res,rej)=>{
+  const t=d.transaction('kv','readonly'), q=t.objectStore('kv').get(k);
+  q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); })); }
+
+function seedGuards(o){
+  if(!o||!o.habits) o=seed();
+  if(!o.read) o.read=[];
+  if(!o.photos) o.photos=[];
+  if(!o.set) o.set=seed().set;
+  if(o.set.bleed==null) o.set.bleed=5;
+  if(o.set.sync==null) o.set.sync=0;
+  if(o.set.mealMin==null) o.set.mealMin=20;
+  return o;
+}
+function loadSync(){
+  let o=null;
+  try{ o=JSON.parse(localStorage.getItem(CORE)); }catch(e){}
+  if(!o||!o.habits){ try{ o=JSON.parse(localStorage.getItem(KEY)); }catch(e){} }   // versión anterior
+  o=seedGuards(o);
+  try{ const p=JSON.parse(localStorage.getItem(PHOTOS)); if(Array.isArray(p)) o.photos=p; }catch(e){}
+  return o;
+}
+let S=loadSync();
+
+function save(){
+  S._ts=Date.now();
+  const photos=S.photos||[];
+  const core={}; for(const k in S) if(k!=='photos') core[k]=S[k];
+  SAVED.err=null;
+
+  // 1. núcleo en localStorage, verificado
+  try{
+    const s=JSON.stringify(core);
+    localStorage.setItem(CORE,s);
+    if(localStorage.getItem(CORE)!==s) throw new Error('verificacion');
+    SAVED.core='ok';
+  }catch(e){ SAVED.core='error'; SAVED.err='No pude guardar en el almacenamiento del navegador ('+(e.name||e.message)+')'; }
+
+  // 2. fotos aparte — si no caben aquí, siguen viviendo en IndexedDB
+  try{ localStorage.setItem(PHOTOS,JSON.stringify(photos)); SAVED.photos='ok'; }
+  catch(e){ SAVED.photos='idb'; try{ localStorage.removeItem(PHOTOS); }catch(_){} }
+
+  // 3. copia durable en IndexedDB (cuota mucho mayor)
+  idbPut('core',core).catch(()=>{});
+  idbPut('photos',photos).then(()=>{ if(SAVED.photos!=='ok') SAVED.photos='idb'; })
+    .catch(()=>{ if(SAVED.photos!=='ok'){ SAVED.photos='error';
+      SAVED.err='No pude guardar las fotos: ya no hay espacio. Borra algunas desde Progreso.'; } });
+
+  SAVED.at=new Date();
+  if(SAVED.core==='error'){ toast('⚠️ No se guardó — abre Ajustes'); }
+  updateSaveBadge();
+}
+function updateSaveBadge(){
+  const el=document.getElementById('savebadge'); if(!el)return;
+  if(SAVED.core==='error'){ el.textContent='⚠️ sin guardar'; el.style.color='#B4544A'; }
+  else if(SAVED.at){ el.textContent='guardado '+String(SAVED.at.getHours()).padStart(2,'0')+':'+String(SAVED.at.getMinutes()).padStart(2,'0'); el.style.color='var(--muted)'; }
+}
+function bytes(n){ return n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(2)+' MB'; }
+function storageReport(){
+  let core=0,ph=0;
+  try{ core=(localStorage.getItem(CORE)||'').length; }catch(e){}
+  try{ ph=(localStorage.getItem(PHOTOS)||'').length; }catch(e){}
+  const dias=Object.keys(S.log||{}).length;
+  const comidas=Object.values(S.log||{}).reduce((a,d)=>a+((d.meals||[]).length),0);
+  const conFoto=Object.values(S.log||{}).reduce((a,d)=>a+((d.meals||[]).filter(m=>m.photo).length),0);
+  return {core,ph,dias,comidas,conFoto,fotos:(S.photos||[]).length};
+}
+
+/* pedir que el navegador NO borre estos datos */
+if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
+
+/* reconciliar con IndexedDB por si localStorage se vació o falló */
+Promise.all([idbGet('core').catch(()=>null), idbGet('photos').catch(()=>null)]).then(([c,p])=>{
+  let changed=false;
+  if(c && c.habits && (c._ts||0) > (S._ts||0)){ const keep=S.photos; S=seedGuards(c); S.photos=keep; changed=true; }
+  if(Array.isArray(p) && p.length > (S.photos||[]).length){ S.photos=p; changed=true; }
+  if(changed){ renderAll(); toast('Recuperé tus datos del respaldo interno ✓'); }
+}).catch(()=>{});
+
+/* guardar también al salir o mandar la app a segundo plano */
+addEventListener('pagehide',()=>{ try{save();}catch(e){} });
+addEventListener('beforeunload',()=>{ try{save();}catch(e){} });
 
 let VIEW=todayISO();
 function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null,fastFrom:null};
@@ -922,7 +1017,7 @@ function renderHoy(){
   document.getElementById('prot-v').textContent=Math.round(P)+' g';
   document.getElementById('r-prot').style.strokeDashoffset=132-(132*Math.min(1,P/S.set.prot));
 
-  renderFast(); renderWegovy();
+  renderFast(); renderWegovy(); updateSaveBadge();
 }
 function weekStart(d){const x=parseISO(d);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return iso(x);}
 function weekCount(id,d){let c=0;const ws=weekStart(d);for(let i=0;i<7;i++){const k=addDays(ws,i);if(S.log[k]&&S.log[k].h&&S.log[k].h[id])c++;}return c;}
@@ -1214,14 +1309,10 @@ function nearestInbody(d){ if(!S.inbody.length)return null;
 document.getElementById('pf-file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=ev=>{ const img=new Image(); img.onload=()=>{
-    const c=document.createElement('canvas'); const sc=Math.min(1,560/Math.max(img.width,img.height));
-    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    const data=c.toDataURL('image/jpeg',0.62);
-    S.photos.push({id:Date.now(),date:todayISO(),img:data,note:'',cd:cycleDay(todayISO())});
+    S.photos.push({id:Date.now(),date:todayISO(),img:shrink(img,480,0.55),note:'',cd:cycleDay(todayISO())});
     S.photos.sort((a,b)=>a.date<b.date?-1:1);
-    try{ save(); }catch(err){ toast('Sin espacio — borra fotos viejas'); }
-    renderAll(); toast('Foto guardada 📸');
+    save(); renderAll();
+    toast(SAVED.core==='error' ? '⚠️ La foto se guardó pero revisa Ajustes' : 'Foto guardada 📸');
   }; img.src=ev.target.result; };
   r.readAsDataURL(f); e.target.value='';
 });
@@ -1443,13 +1534,18 @@ function editMeal(id){ const m=day(VIEW).meals.find(x=>x.id===id); if(!m)return;
 }
 document.getElementById('m-file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f)return; const r=new FileReader();
-  r.onload=ev=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas');
-    const sc=340/Math.max(img.width,img.height); c.width=img.width*sc; c.height=img.height*sc;
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    MPHOTO=c.toDataURL('image/jpeg',0.5);
+  r.onload=ev=>{ const img=new Image(); img.onload=()=>{
+    MPHOTO=shrink(img,300,0.45);
     document.getElementById('m-photo').innerHTML=`<img src="${MPHOTO}">`; }; img.src=ev.target.result; };
-  r.readAsDataURL(f);
+  r.readAsDataURL(f); e.target.value='';
 });
+function shrink(img,max,q){
+  const c=document.createElement('canvas');
+  const sc=Math.min(1,max/Math.max(img.width,img.height));
+  c.width=Math.max(1,Math.round(img.width*sc)); c.height=Math.max(1,Math.round(img.height*sc));
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',q);
+}
 function copyAIPrompt(){
   const d=document.getElementById('m-desc').value.trim()||document.getElementById('m-name').value.trim();
   const n=cycleDay(), ph=phaseOf(n);
@@ -1590,6 +1686,38 @@ function fillSettings(){
   document.getElementById('s-sync').classList.toggle('on',!!S.set.sync);
   document.getElementById('s-synccyc').classList.toggle('on',!!S.set.synccyc);
   document.getElementById('sync-state').textContent=S.set.lastSync?('Última: '+new Date(S.set.lastSync).toLocaleString('es-MX')):'Nunca sincronizado';
+  renderDiag();
+}
+function renderDiag(){
+  const el=document.getElementById('diag'); if(!el)return;
+  const r=storageReport();
+  const estado = SAVED.core==='error' ? '<b style="color:#B4544A">⚠️ Con problemas</b>'
+    : SAVED.core==='ok' ? '<b style="color:#5E9A72">✓ Guardando bien</b>' : '<b>Sin cambios aún</b>';
+  const fotos = SAVED.photos==='ok' ? 'localStorage + IndexedDB'
+    : SAVED.photos==='idb' ? 'solo IndexedDB (ya no caben en el rápido, pero están seguras)'
+    : SAVED.photos==='error' ? '<b style="color:#B4544A">sin espacio — borra fotos</b>' : '—';
+  el.innerHTML=
+    row('Estado',estado)+
+    row('Último guardado',SAVED.at?SAVED.at.toLocaleTimeString('es-MX'):'—')+
+    row('Tus datos (texto)',bytes(r.core))+
+    row('Fotos de progreso',r.fotos+' · '+bytes(r.ph))+
+    row('Dónde viven las fotos',fotos)+
+    row('Días con registro',r.dias)+
+    row('Comidas guardadas',r.comidas+(r.conFoto?' ('+r.conFoto+' con foto)':''))+
+    (SAVED.err?`<div style="font-size:11.5px;color:#B4544A;line-height:1.5;margin-top:8px">${esc(SAVED.err)}</div>`:'')+
+    `<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px">Si alguna vez ves "sin guardar" arriba en Hoy, copia tu respaldo de inmediato.</div>`;
+}
+function testSave(){
+  const marca='t'+Date.now();
+  S._test=marca; save();
+  let ls=null; try{ ls=JSON.parse(localStorage.getItem(CORE)); }catch(e){}
+  const okLS = ls && ls._test===marca;
+  idbGet('core').then(c=>{
+    const okDB = c && c._test===marca;
+    delete S._test; save(); renderDiag();
+    toast(okLS&&okDB ? 'Todo guarda correctamente ✓' : okLS||okDB ? 'Guarda, pero solo en un lugar' : '⚠️ No está guardando — copia tu respaldo');
+  }).catch(()=>{ delete S._test; save(); renderDiag();
+    toast(okLS?'Guarda en el navegador ✓ (sin respaldo interno)':'⚠️ No está guardando'); });
 }
 function saveSettings(){
   const c=document.getElementById('s-cycle').value; if(c) S.cycles[S.cycles.length-1]=c;
@@ -1610,7 +1738,7 @@ function saveSettings(){
 function exportData(){ const t=JSON.stringify(S);
   if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('Respaldo copiado ✓'),()=>fallbackCopy(t)); else fallbackCopy(t); }
 function importData(){ const t=prompt('Pega aquí tu respaldo JSON:'); if(!t)return;
-  try{ const o=JSON.parse(t); if(!o.habits)throw 0; S=o; if(!S.read)S.read=[]; save(); renderAll(); toast('Respaldo restaurado ✓'); }catch(e){ toast('Respaldo inválido'); } }
+  try{ const o=JSON.parse(t); if(!o.habits)throw 0; S=seedGuards(o); save(); renderAll(); toast('Respaldo restaurado ✓'); }catch(e){ toast('Respaldo inválido'); } }
 
 function askNotif(){ if(!('Notification' in window)){toast('Este iPhone no lo soporta');return;}
   Notification.requestPermission().then(p=>toast(p==='granted'?'Notificaciones activadas 🔔':'Permiso denegado')); }

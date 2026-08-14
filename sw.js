@@ -1,7 +1,7 @@
 /* Fit Journey — service worker
    Guarda la app en el teléfono para que abra sin internet.
    No cachea ningún dato personal: todo eso vive en localStorage. */
-const V = 'fitjourney-v4';
+const V = 'fitjourney-v5';
 const ASSETS = ['./', './index.html', './icon.png', './icon-180.png', './manifest.json'];
 
 self.addEventListener('install', e => {
