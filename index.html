@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fit Journey">
+<meta name="theme-color" content="#FBF5F6">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-180.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Fit Journey</title>
+<style>
+  :root{
+    --bg:#FBF5F6; --card:#FFFFFF; --ink:#3B2A30; --muted:#A38F96; --line:#F2E4E7;
+    --rose:#E09AAB; --rose-d:#C4718A; --rose-l:#FCEEF1;
+    --blush:#F2C2C9; --blush-l:#FDF4F5;
+    --mauve:#C9A2BC; --mauve-l:#F7EEF6;
+    --peach:#EFB4A4; --peach-l:#FDF1ED;
+    --wine:#7E4E5F; --wine-l:#F3E8EC;
+    --safeT:env(safe-area-inset-top); --safeB:env(safe-area-inset-bottom);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;overscroll-behavior:none}
+  body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;color:var(--ink);
+       display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+  h1,h2,h3,h4{margin:0}
+  button,input,textarea,select{font-family:inherit;color:inherit}
+
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--safeT) + 10px) 18px calc(var(--safeB) + 96px);scrollbar-width:none}
+  .scroll::-webkit-scrollbar{display:none}
+
+  .topbar{padding:6px 0 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .topbar .hi{font-size:13px;color:var(--muted)}
+  .topbar h2{font-size:25px;letter-spacing:-.6px;margin-top:2px}
+  .icbtn{width:36px;height:36px;border-radius:50%;background:var(--rose-d);color:#fff;border:0;font-size:19px;line-height:1;flex:0 0 auto}
+  .icbtn.ghost{background:#fff;color:var(--rose-d);box-shadow:0 1px 3px rgba(150,90,110,.14);font-size:16px}
+
+  .datestrip{display:flex;gap:6px;margin-bottom:14px}
+  .ds{flex:1;text-align:center;padding:8px 2px;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .ds .d{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .ds .n{font-size:14px;font-weight:700;margin-top:2px}
+  .ds .dot{width:5px;height:5px;border-radius:50%;background:var(--rose);margin:3px auto 0;opacity:0}
+  .ds.has .dot{opacity:1}
+  .ds.on{background:var(--rose-d);color:#fff}.ds.on .d{color:rgba(255,255,255,.7)}.ds.on .dot{background:#fff}
+
+  .card{background:var(--card);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .card.t-rose{background:var(--rose-l)} .card.t-blush{background:var(--blush-l)}
+  .card.t-mauve{background:var(--mauve-l)} .card.t-peach{background:var(--peach-l)} .card.t-wine{background:var(--wine-l)}
+
+  .sec{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:18px 4px 8px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .sec .add{color:var(--rose-d);font-size:17px;font-weight:700;padding:0 6px}
+
+  .rings{display:flex;gap:10px}
+  .ring{flex:1;background:#fff;border-radius:20px;padding:13px 8px;text-align:center;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .ring svg{display:block;margin:0 auto}
+  .ring .v{font-size:15px;font-weight:700;margin-top:6px}
+  .ring .l{font-size:9.5px;color:var(--muted);margin-top:1px}
+
+  .habit{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:13px 14px;margin-bottom:9px;box-shadow:0 1px 2px rgba(150,90,110,.07);transition:.15s}
+  .habit:active{transform:scale(.985)}
+  .habit .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;flex:0 0 auto}
+  .habit .tx{flex:1;min-width:0}
+  .habit .tx b{display:block;font-size:14px;font-weight:600;letter-spacing:-.2px}
+  .habit .tx span{font-size:11.5px;color:var(--muted)}
+  .habit .chk{width:28px;height:28px;border-radius:50%;border:2px solid #E8D8DC;flex:0 0 auto;display:grid;place-items:center;color:#fff;font-size:15px;transition:.15s}
+  .habit.done{opacity:.55}
+  .habit.done .chk{background:var(--rose);border-color:var(--rose)}
+  .habit.done .tx b{text-decoration:line-through}
+  .streak{font-size:10px;color:var(--peach);font-weight:700;margin-left:5px}
+  .tag-new{font-size:9px;background:var(--blush);color:#7d4a56;border-radius:5px;padding:2px 5px;margin-left:6px;font-weight:700;letter-spacing:.3px}
+  .tag-sync{font-size:9px;background:var(--mauve-l);color:#8a6a80;border-radius:5px;padding:2px 5px;margin-left:5px;font-weight:700}
+
+  .bar{height:9px;background:#F4E7EA;border-radius:99px;overflow:hidden;margin-top:9px}
+  .bar > i{display:block;height:100%;border-radius:99px;transition:.4s}
+
+  .stanleys{display:flex;gap:14px;justify-content:center;margin-top:14px;align-items:flex-end}
+  .stan{text-align:center}
+  .stan .lbl{font-size:9.5px;color:#8a6a80;margin-top:4px}
+  .wctl{display:flex;gap:8px;margin-top:14px}
+  .wctl button{flex:1;border:0;background:#fff;border-radius:13px;padding:12px;font-size:13px;font-weight:700;color:#8a6a80;box-shadow:0 1px 2px rgba(150,90,110,.08)}
+
+  .fast{background:linear-gradient(140deg,#7E4E5F,#A76A7E);border-radius:22px;padding:18px;color:#fff}
+  .fast .row{display:flex;align-items:center;gap:16px}
+  .fast .t{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+  .fast .s{font-size:11px;opacity:.75;margin-top:4px;line-height:1.45}
+  .fast .st{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:99px;margin-bottom:9px}
+  .fast .note{font-size:11.5px;opacity:.85;line-height:1.6;margin-top:13px;border-top:1px solid rgba(255,255,255,.18);padding-top:11px}
+  .fast .tip{font-size:11px;opacity:.6;line-height:1.5;margin-top:7px}
+
+  .cyc-hero{background:linear-gradient(140deg,#F7D5DC,#EFC0CE 50%,#D9AFC8);border-radius:24px;padding:22px 18px;color:#5a3a46}
+  .cyc-hero .day{font-size:52px;font-weight:800;line-height:1;letter-spacing:-2px}
+  .cyc-hero .ph{font-size:15px;font-weight:700;margin-top:6px}
+  .cyc-hero .sub{font-size:12px;opacity:.8;margin-top:3px;line-height:1.45}
+  .phases{display:flex;gap:6px;margin-top:16px}
+  .phases div{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.5)}
+  .phases div.on{background:#fff}
+  .phase-lbl{display:flex;gap:6px;margin-top:6px;font-size:9.5px;opacity:.85}
+  .phase-lbl span{flex:1;text-align:center}
+
+  .predict{display:flex;gap:10px}
+  .pr{flex:1;background:#fff;border-radius:18px;padding:14px 12px;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .pr .e{font-size:20px}.pr b{display:block;font-size:14px;margin-top:5px}
+  .pr span{font-size:10.5px;color:var(--muted);line-height:1.45;display:block;margin-top:2px}
+
+  .track{position:relative;height:34px;margin-top:14px;border-radius:99px;background:#F4E7EA;overflow:hidden}
+  .track i{position:absolute;top:0;bottom:0;display:block}
+  .track .lbl{position:absolute;top:9px;font-size:9.5px;font-weight:700;color:#fff;letter-spacing:.3px}
+  .track .now{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--ink);border-radius:2px}
+
+  .seedbox{display:flex;gap:10px}
+  .seed{flex:1;background:#fff;border-radius:18px;padding:14px 12px;text-align:center;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .seed .e{font-size:26px} .seed b{display:block;font-size:13px;margin-top:6px}
+  .seed span{font-size:10.5px;color:var(--muted)}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .m{background:#fff;border-radius:18px;padding:14px;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .m .l{font-size:10.5px;color:var(--muted);letter-spacing:.3px}
+  .m .v{font-size:22px;font-weight:700;letter-spacing:-.8px;margin-top:3px}
+  .m .v small{font-size:11px;font-weight:600;color:var(--muted)}
+  .m .d{font-size:10.5px;font-weight:700;margin-top:2px}
+  .down{color:#5E9A72} .up{color:#C4718A} .flat{color:var(--muted)}
+
+  .meal{display:flex;gap:11px;align-items:center;background:#fff;border-radius:16px;padding:11px 13px;margin-bottom:8px;box-shadow:0 1px 2px rgba(150,90,110,.07)}
+  .meal .e{font-size:19px;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--bg);flex:0 0 auto;overflow:hidden}
+  .meal .e img{width:100%;height:100%;object-fit:cover}
+  .meal .t{flex:1;min-width:0}.meal .t b{font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .meal .t span{font-size:11px;color:var(--muted)}
+  .meal .n{text-align:right;font-size:11px;color:var(--muted);line-height:1.35;flex:0 0 auto}
+  .meal .n b{display:block;font-size:13px;color:var(--ink)}
+  .xdel{width:28px;height:28px;border-radius:50%;background:var(--bg);color:#B4544A;display:grid;place-items:center;font-size:12px;flex:0 0 auto;margin-left:2px}
+  .addbtn{width:100%;border:1.5px dashed #E7D3D8;background:transparent;border-radius:16px;padding:13px;color:var(--muted);font-size:13px;font-weight:600;margin-bottom:10px}
+  .aibtn{width:100%;border:0;background:linear-gradient(120deg,#C4718A,#E09AAB);color:#fff;border-radius:16px;padding:15px;font-size:13.5px;font-weight:700;margin-bottom:8px;box-shadow:0 4px 14px -4px rgba(196,113,138,.55)}
+
+  .steps{display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:12px}
+  .steps i{flex:1;background:var(--rose);border-radius:5px 5px 3px 3px;opacity:.9;min-height:3px}
+
+  .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+  .hc{aspect-ratio:1;border-radius:7px;background:#F4E7EA;display:grid;place-items:center;font-size:8.5px;color:#C9B4BA;font-weight:700}
+
+  .lrn{background:#fff;border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:0 1px 2px rgba(150,90,110,.07);position:relative}
+  .lrn b{font-size:14px;display:block;padding-right:52px} .lrn p{margin:5px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+  .lrn .tagl{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--rose-d);background:var(--rose-l);border-radius:5px;padding:3px 7px;margin-bottom:7px}
+  .lrn.unread{border:1.5px solid var(--blush)}
+  .lrn .nw{position:absolute;top:13px;right:13px;font-size:9px;background:var(--blush);color:#7d4a56;border-radius:5px;padding:2px 6px;font-weight:700}
+
+  .tabs{flex:0 0 auto;height:calc(62px + var(--safeB));background:rgba(255,255,255,.95);backdrop-filter:blur(18px);border-top:1px solid var(--line);
+        display:flex;padding:8px 4px var(--safeB);position:relative;z-index:40}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:#CDB9BF;font-size:9.5px;font-weight:600}
+  .tab .i{font-size:19px;filter:grayscale(1);opacity:.5}
+  .tab.on{color:var(--rose-d)} .tab.on .i{filter:none;opacity:1}
+
+  .sheet-bg{position:fixed;inset:0;background:rgba(60,35,45,.4);opacity:0;pointer-events:none;transition:.25s;z-index:70}
+  .sheet-bg.open{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;top:0;bottom:0;background:#fff;padding:0 20px calc(var(--safeB) + 50px);overflow-y:auto;overscroll-behavior:contain;
+         transform:translateY(100%);transition:.3s cubic-bezier(.3,.9,.3,1);z-index:80;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .sheet::-webkit-scrollbar{display:none}
+  .sheet.open{transform:translateY(0)}
+  .grab{position:sticky;top:0;margin:0 -20px 10px;padding:calc(var(--safeT) + 12px) 20px 12px;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+        z-index:9;display:flex;justify-content:flex-end;border-bottom:1px solid var(--line)}
+  .grab::after{content:'✕';width:32px;height:32px;border-radius:50%;background:var(--rose-l);display:grid;place-items:center;font-size:14px;color:var(--rose-d)}
+  .sheet h3{font-size:19px;letter-spacing:-.4px}
+  .sheet .kicker{font-size:11px;color:var(--muted);margin-top:3px}
+  .sheet h4{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+  .sheet ul{margin:0;padding-left:16px} .sheet li{font-size:12.8px;line-height:1.65;margin-bottom:7px}
+  .sheet p.body{font-size:13.5px;line-height:1.75;margin:0 0 12px}
+  .tl{display:flex;gap:10px;margin-bottom:10px}
+  .tl .w{flex:0 0 82px;font-size:10.5px;font-weight:700;color:var(--rose-d);padding-top:2px}
+  .tl .c{font-size:12.5px;line-height:1.55;color:#5a4a50}
+
+  .f-lbl{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;display:block}
+  .f-in{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 13px;font-size:16px;background:var(--bg);-webkit-appearance:none}
+  .f-in::placeholder{color:#CDB9BF}
+  .f-hint{font-size:11px;color:#B6A2A8;margin-top:5px;line-height:1.5}
+  .f2{display:flex;gap:9px}.f2>div{flex:1}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{border:1.5px solid var(--line);background:var(--bg);border-radius:99px;padding:9px 13px;font-size:12.5px;font-weight:600;color:#7a666c}
+  .chip.on{background:var(--rose-d);color:#fff;border-color:var(--rose-d)}
+  .row-tog{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);gap:12px}
+  .row-tog .rt{font-size:13.5px;font-weight:600}
+  .row-tog .rs{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .tog{width:46px;height:27px;border-radius:99px;background:#E8D8DC;position:relative;transition:.2s;flex:0 0 auto}
+  .tog i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .tog.on{background:var(--rose)} .tog.on i{left:22px}
+  .savebtn{width:100%;border:0;background:var(--rose-d);color:#fff;border-radius:16px;padding:16px;font-size:15px;font-weight:700;margin-top:20px}
+  .delbtn{width:100%;border:0;background:#FBEDEB;color:#B4544A;border-radius:16px;padding:14px;font-size:14px;font-weight:700;margin-top:10px}
+  .ghostbtn{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:14px;font-size:14px;font-weight:700;margin-top:10px}
+
+  .photo{width:100%;height:170px;border-radius:18px;background:linear-gradient(135deg,#F6E2E6,#EED0D8);display:grid;place-items:center;font-size:44px;overflow:hidden}
+  .photo img{width:100%;height:100%;object-fit:cover}
+  .ai-out{background:var(--rose-l);border-radius:16px;padding:14px;margin-top:12px}
+  .macro{display:flex;gap:8px;text-align:center}
+  .macro>div{flex:1;background:#fff;border-radius:13px;padding:9px 3px}
+  .macro b{display:block;font-size:15px;letter-spacing:-.5px} .macro span{font-size:9px;color:var(--muted)}
+
+  .page{display:none} .page.on{display:block}
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(var(--safeB) + 80px);background:var(--wine);color:#fff;
+         padding:12px 20px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:.25s;z-index:120;pointer-events:none;max-width:80%;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="scroll" id="scroll">
+
+  <!-- ================= HOY ================= -->
+  <div class="page on" id="p-hoy">
+    <div class="topbar">
+      <div><div class="hi" id="h-date"></div><h2 id="h-greet">Hola, Balbina 🌸</h2></div>
+      <button class="icbtn ghost" onclick="openSheet('sheet-set')">⚙︎</button>
+      <button class="icbtn" onclick="newHabit()">＋</button>
+    </div>
+
+    <div class="datestrip" id="datestrip"></div>
+
+    <div class="rings">
+      <div class="ring">
+        <svg width="50" height="50" viewBox="0 0 52 52"><circle cx="26" cy="26" r="21" fill="none" stroke="#F4E7EA" stroke-width="7"/><circle id="r-hab" cx="26" cy="26" r="21" fill="none" stroke="#C4718A" stroke-width="7" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="132" transform="rotate(-90 26 26)"/></svg>
+        <div class="v" id="hab-v">0/0</div><div class="l">Hábitos</div>
+      </div>
+      <div class="ring">
+        <svg width="50" height="50" viewBox="0 0 52 52"><circle cx="26" cy="26" r="21" fill="none" stroke="#F4E7EA" stroke-width="7"/><circle id="r-agua" cx="26" cy="26" r="21" fill="none" stroke="#C9A2BC" stroke-width="7" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="132" transform="rotate(-90 26 26)"/></svg>
+        <div class="v" id="agua-v">0</div><div class="l">Stanleys</div>
+      </div>
+      <div class="ring">
+        <svg width="50" height="50" viewBox="0 0 52 52"><circle cx="26" cy="26" r="21" fill="none" stroke="#F4E7EA" stroke-width="7"/><circle id="r-prot" cx="26" cy="26" r="21" fill="none" stroke="#EFB4A4" stroke-width="7" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="132" transform="rotate(-90 26 26)"/></svg>
+        <div class="v" id="prot-v">0 g</div><div class="l">Proteína</div>
+      </div>
+    </div>
+
+    <div class="sec">Descanso pancreático</div>
+    <div class="fast" id="fastcard"></div>
+
+    <div id="hgroups"></div>
+
+    <button class="addbtn" onclick="newHabit()" style="margin-top:4px">＋ Agregar hábito</button>
+
+    <div class="sec">Hidratación</div>
+    <div class="card t-mauve">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <b style="font-size:14px">Tu Stanley</b><span style="font-size:12px;color:#8a6a80" id="agua-lbl"></span>
+      </div>
+      <div style="font-size:11.5px;color:#8a6a80;margin-top:3px">1 Stanley = 1.18 L · meta 2.5 Stanleys (2.95 L)</div>
+      <div class="stanleys" id="stanleys"></div>
+      <div class="wctl"><button onclick="addW(-1)">− ¼</button><button onclick="addW(1)">+ ¼ de Stanley</button></div>
+      <div style="text-align:center;font-size:12.5px;color:#8a6a80;font-weight:700;margin-top:11px" id="agua-l"></div>
+    </div>
+
+    <div class="sec">Tratamiento</div>
+    <div class="card t-wine" id="wegovycard"></div>
+  </div>
+
+  <!-- ================= CICLO ================= -->
+  <div class="page" id="p-ciclo">
+    <div class="topbar"><div><div class="hi">Tu ciclo</div><h2 id="c-title">—</h2></div>
+      <button class="icbtn ghost" onclick="openSheet('sheet-set')">⚙︎</button></div>
+    <div class="cyc-hero" id="cychero"></div>
+
+    <div class="sec">Predicción</div>
+    <div class="predict" id="predict"></div>
+    <div class="card" style="margin-top:12px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase">Mapa del ciclo</div>
+      <div class="track" id="track"></div>
+      <div style="display:flex;gap:10px;font-size:9.5px;color:var(--muted);margin-top:9px;flex-wrap:wrap">
+        <span><b style="color:#C4718A">■</b> sangrado</span><span><b style="color:#F2C2C9">■</b> folicular</span>
+        <span><b style="color:#C9A2BC">■</b> ventana fértil</span><span><b style="color:#EFB4A4">■</b> lútea</span>
+      </div>
+      <div id="predict-note" style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:11px"></div>
+    </div>
+    <button class="addbtn" onclick="startPeriod()">🩸 Hoy empezó mi periodo (reiniciar a día 1)</button>
+
+    <div class="sec">Tus semillas de hoy</div>
+    <div class="seedbox" id="seedbox"></div>
+    <div class="card t-peach" style="margin-top:12px">
+      <div style="font-size:12.5px;line-height:1.6"><b>Regla de oro:</b> molidas siempre. Enteras, la fibra exterior impide absorber los fitoestrógenos y la vitamina E. Van sobre tu ensalada, en yogurt griego sin azúcar o en tu agua con chía.</div>
+    </div>
+
+    <div class="sec">Qué esperar esta fase</div>
+    <div class="card" id="phasetips"></div>
+
+    <div class="sec">Ciclos registrados</div>
+    <div id="cyclelog"></div>
+  </div>
+
+  <!-- ================= PROGRESO ================= -->
+  <div class="page" id="p-prog">
+    <div class="topbar"><div><div class="hi">Tu historial</div><h2>Progreso</h2></div>
+      <button class="icbtn" onclick="openSheet('sheet-inbody')">＋</button></div>
+
+    <div class="sec">Constancia · últimos 28 días</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <b style="font-size:14px" id="adh-pct">—</b><span style="font-size:11px;color:var(--muted)">de hábitos cumplidos</span>
+      </div>
+      <div class="heat" id="heat"></div>
+    </div>
+
+    <div class="sec">Rachas</div>
+    <div id="streaks"></div>
+
+    <div class="sec">Agua · últimos 14 días</div>
+    <div class="card"><div class="steps" id="waterchart"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px" id="water-avg"></div></div>
+
+    <div class="sec">InBody</div>
+    <div id="inbody-latest"></div>
+    <div class="card">
+      <svg id="inbody-chart" viewBox="0 0 300 120" style="width:100%;height:120px"></svg>
+      <div style="font-size:11px;color:var(--muted);line-height:1.55">Mídete siempre el mismo día del ciclo y en ayunas — medir durante el sangrado infla los números por líquido, no por grasa.</div>
+    </div>
+    <div id="inbody-list"></div>
+    <button class="aibtn" onclick="document.getElementById('ib-file').click()">📄 Importar archivo de InBody</button>
+    <input type="file" id="ib-file" accept=".csv,.txt,.tsv,.xls,.xlsx" style="display:none">
+    <button class="addbtn" onclick="openSheet('sheet-inbody')">✏️ Capturar a mano</button>
+
+    <div class="sec">Tu balance metabólico</div>
+    <div class="card" id="balance"></div>
+  </div>
+
+  <!-- ================= COMIDAS ================= -->
+  <div class="page" id="p-com">
+    <div class="topbar"><div><div class="hi" id="m-date"></div><h2>Comidas</h2></div></div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13.5px">Proteína</b><span style="font-size:12px" id="m-prot"></span></div>
+      <div class="bar"><i id="bar-prot" style="background:var(--peach)"></i></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Mínimo 110–120 g/día para blindar tu masa muscular.</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13.5px">Calorías</b><span style="font-size:12px" id="m-kcal"></span></div>
+      <div class="bar"><i id="bar-kcal" style="background:var(--rose)"></i></div>
+    </div>
+    <div class="card" style="background:var(--wine);color:#fff;display:flex;align-items:center;gap:13px" id="fastmini"></div>
+
+    <div class="card t-rose">
+      <b style="font-size:13px">🥩 Secuencia quirúrgica</b>
+      <div style="display:flex;gap:6px;margin-top:11px;text-align:center;font-size:10.5px;line-height:1.35">
+        <div style="flex:1;background:#fff;border-radius:12px;padding:9px 4px"><div style="font-size:17px">🥬</div><b>1º Fibra</b><br><span style="color:var(--muted)">verduras</span></div>
+        <div style="align-self:center;color:var(--rose-d)">→</div>
+        <div style="flex:1;background:#fff;border-radius:12px;padding:9px 4px"><div style="font-size:17px">🍗</div><b>2º Proteína</b><br><span style="color:var(--muted)">y grasa</span></div>
+        <div style="align-self:center;color:var(--rose-d)">→</div>
+        <div style="flex:1;background:#fff;border-radius:12px;padding:9px 4px"><div style="font-size:17px">🌮</div><b>3º Carbo</b><br><span style="color:var(--muted)">al final</span></div>
+      </div>
+      <div style="font-size:11.5px;color:#96606f;margin-top:10px;line-height:1.5">Aplana la curva glucémica hasta 75%. Es el mismo plato, solo cambia el orden.</div>
+    </div>
+
+    <div class="sec">Registro del día</div>
+    <button class="aibtn" onclick="newMeal()">📸 Registrar comida con foto</button>
+    <div id="meallist"></div>
+
+    <div class="sec">Pasos · últimos 7 días</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:13.5px" id="steps-today">—</b><span style="font-size:11px;color:var(--muted)" id="steps-goal"></span></div>
+      <div class="steps" id="stepchart"></div>
+      <button class="addbtn" style="margin-top:12px;margin-bottom:0" onclick="askSteps()">✏️ Anotar mis pasos de hoy</button>
+    </div>
+  </div>
+
+  <!-- ================= APRENDE ================= -->
+  <div class="page" id="p-apr">
+    <div class="topbar"><div><div class="hi" id="apr-count">Tu biblioteca</div><h2>Aprende</h2></div></div>
+    <div class="card t-mauve" style="font-size:12.5px;line-height:1.6">Cada informe que abres desbloquea otros más profundos. Empieza por cualquiera y la biblioteca crece contigo.</div>
+    <div id="learn"></div>
+  </div>
+
+</div><!-- /scroll -->
+
+<div class="tabs">
+  <div class="tab on" data-p="hoy"><div class="i">🌸</div>Hoy</div>
+  <div class="tab" data-p="ciclo"><div class="i">🌙</div>Ciclo</div>
+  <div class="tab" data-p="prog"><div class="i">📊</div>Progreso</div>
+  <div class="tab" data-p="com"><div class="i">🍽️</div>Comidas</div>
+  <div class="tab" data-p="apr"><div class="i">📖</div>Aprende</div>
+</div>
+
+<div class="sheet-bg" id="sbg" onclick="closeSheets()"></div>
+
+<!-- ficha de hábito -->
+<div class="sheet" id="sheet-h">
+  <div class="grab"></div>
+  <h3 id="sh-t"></h3><div class="kicker" id="sh-k"></div>
+  <div id="sh-streak" style="margin-top:12px"></div>
+  <div id="sh-time-box"></div>
+  <h4>Recordatorio</h4><div id="sh-rem"></div>
+  <h4>Para qué sirve exactamente</h4><ul id="sh-why"></ul>
+  <h4>Qué vas a sentir y cuándo</h4><div id="sh-when"></div>
+  <button class="ghostbtn" id="sh-edit">✏️ Editar este hábito</button>
+</div>
+
+<!-- nuevo / editar hábito -->
+<div class="sheet" id="sheet-n">
+  <div class="grab"></div>
+  <h3 id="n-title">Nuevo hábito</h3>
+  <div class="kicker">Entre más completes, mejor te recuerda y mejor lo mide</div>
+  <span class="f-lbl">Nombre</span><input class="f-in" id="n-name" placeholder="ej. Té de manzanilla nocturno">
+  <span class="f-lbl">Ícono</span><div class="chips" id="n-ic"></div>
+  <span class="f-lbl">Momento del día</span><div class="chips" id="n-g"></div>
+  <span class="f-lbl">Cantidad / dosis</span><input class="f-in" id="n-dose" placeholder="ej. 2 cápsulas · 1 cda · 20 minutos">
+  <span class="f-lbl">Frecuencia</span><div class="chips" id="n-freq"></div>
+  <div class="f2">
+    <div><span class="f-lbl">Hora objetivo</span><input class="f-in" id="n-time" type="time"></div>
+    <div><span class="f-lbl">Veces/semana</span><input class="f-in" id="n-per" type="number" min="1" max="7" placeholder="3"></div>
+  </div>
+  <span class="f-lbl">Anclarlo a un evento</span><div class="chips" id="n-anchor"></div>
+  <span class="f-lbl">Recordatorio</span>
+  <div class="row-tog"><div><div class="rt">Notificarme</div><div class="rs">Con la app abierta o recién usada</div></div><div class="tog on" id="n-remind" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <div class="row-tog" style="border:0"><div><div class="rt">Insistir hasta marcarlo</div><div class="rs">Repite cada 15 min, máx. 3 veces</div></div><div class="tog on" id="n-nag" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <span class="f-lbl">¿Para qué sirve? (tu ficha)</span>
+  <textarea class="f-in" id="n-why" rows="3" placeholder="Una idea por renglón"></textarea>
+  <span class="f-lbl">Línea de tiempo esperada</span>
+  <textarea class="f-in" id="n-when" rows="2" placeholder="Días 1–3: mejor sueño&#10;Semanas 3–4: menos retención"></textarea>
+  <span class="f-lbl">¿Qué métrica impacta?</span><div class="chips" id="n-metric"></div>
+  <span class="f-lbl">Opciones</span>
+  <div class="row-tog"><div><div class="rt">Contar en mi anillo de hábitos</div><div class="rs">Suma al progreso diario</div></div><div class="tog on" id="n-ring" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <div class="row-tog" style="border:0"><div><div class="rt">¿Rompe la ventana de 4 h?</div><div class="rs">Si tiene calorías, reinicia el timer al marcarlo</div></div><div class="tog" id="n-breaks" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <button class="savebtn" onclick="saveHabit()">Guardar hábito</button>
+  <button class="delbtn" id="n-del" onclick="deleteHabit()" style="display:none">Eliminar hábito</button>
+</div>
+
+<!-- comida -->
+<div class="sheet" id="sheet-m">
+  <div class="grab"></div>
+  <h3>Registrar comida</h3><div class="kicker">Foto + descripción → macros</div>
+  <span class="f-lbl">Foto del plato</span>
+  <div class="photo" id="m-photo" onclick="document.getElementById('m-file').click()">📷</div>
+  <input type="file" id="m-file" accept="image/*" style="display:none">
+  <span class="f-lbl">Qué comiste</span><input class="f-in" id="m-name" placeholder="ej. Pechuga asada + ensalada">
+  <span class="f-lbl">Descripción para la IA</span>
+  <textarea class="f-in" id="m-desc" rows="3" placeholder="Porciones con referencias (palma, puño, cucharadas) y método de cocción"></textarea>
+  <button class="ghostbtn" onclick="copyAIPrompt()" style="margin-top:8px">✨ Copiar para pedirle las macros a tu Gem</button>
+  <div class="f-hint">Copia el texto, pégalo en tu chat de Gemini junto con la foto, y regresa a escribir los números aquí abajo.</div>
+  <div class="f2" style="margin-top:4px">
+    <div><span class="f-lbl">Calorías</span><input class="f-in" id="m-kc" type="number" inputmode="numeric" placeholder="465"></div>
+    <div><span class="f-lbl">Proteína (g)</span><input class="f-in" id="m-p" type="number" inputmode="numeric" placeholder="48"></div>
+  </div>
+  <div class="f2">
+    <div><span class="f-lbl">Carbos (g)</span><input class="f-in" id="m-c" type="number" inputmode="numeric" placeholder="9"></div>
+    <div><span class="f-lbl">Grasa (g)</span><input class="f-in" id="m-f" type="number" inputmode="numeric" placeholder="26"></div>
+  </div>
+  <span class="f-lbl">Hora en que comiste</span>
+  <input class="f-in" id="m-time" type="time">
+  <div class="f-hint">Si lo registras después, corrige la hora: de aquí sale el timer de descanso pancreático.</div>
+  <span class="f-lbl">Ícono</span><input class="f-in" id="m-ic" value="🍽️">
+  <span class="f-lbl">Orden en que lo comiste</span><div class="chips" id="m-seq"></div>
+  <div class="row-tog" style="border:0;margin-top:6px"><div><div class="rt">Rompe la ventana de 4 h</div><div class="rs">Apágalo para café solo, agua o infusión sin azúcar</div></div><div class="tog on" id="m-breaks" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <button class="savebtn" onclick="saveMeal()">Guardar en mi día</button>
+  <button class="delbtn" id="m-del" onclick="deleteMeal()" style="display:none">Eliminar</button>
+</div>
+
+<!-- inbody -->
+<div class="sheet" id="sheet-inbody">
+  <div class="grab"></div>
+  <h3>Nuevo InBody</h3><div class="kicker">Importa tu archivo o captura a mano</div>
+  <button class="ghostbtn" onclick="document.getElementById('ib-file').click()" style="margin-top:14px">📄 Importar archivo (.csv / .xlsx)</button>
+  <div class="f-hint">Exporta desde la app InBody o desde el equipo del gym. Leo automáticamente peso, SMM, % grasa, visceral, IMC, TMB y score.</div>
+  <span class="f-lbl">Fecha</span><input class="f-in" id="ib-date" type="date">
+  <div class="f2"><div><span class="f-lbl">Peso (kg)</span><input class="f-in" id="ib-w" type="number" step="0.1" inputmode="decimal"></div>
+  <div><span class="f-lbl">Músculo SMM (kg)</span><input class="f-in" id="ib-smm" type="number" step="0.1" inputmode="decimal"></div></div>
+  <div class="f2"><div><span class="f-lbl">% grasa</span><input class="f-in" id="ib-pbf" type="number" step="0.1" inputmode="decimal"></div>
+  <div><span class="f-lbl">Masa grasa (kg)</span><input class="f-in" id="ib-fat" type="number" step="0.1" inputmode="decimal"></div></div>
+  <div class="f2"><div><span class="f-lbl">Grasa visceral</span><input class="f-in" id="ib-vis" type="number" inputmode="numeric"></div>
+  <div><span class="f-lbl">IMC</span><input class="f-in" id="ib-bmi" type="number" step="0.1" inputmode="decimal"></div></div>
+  <div class="f2"><div><span class="f-lbl">TMB (kcal)</span><input class="f-in" id="ib-tmb" type="number" inputmode="numeric"></div>
+  <div><span class="f-lbl">InBody Score</span><input class="f-in" id="ib-score" type="number" inputmode="numeric"></div></div>
+  <span class="f-lbl">Día de tu ciclo al medirte</span><input class="f-in" id="ib-cd" type="number" inputmode="numeric">
+  <button class="savebtn" onclick="saveInbody()">Guardar medición</button>
+</div>
+
+<!-- artículo -->
+<div class="sheet" id="sheet-a">
+  <div class="grab"></div>
+  <div id="a-tag"></div>
+  <h3 id="a-t"></h3>
+  <div id="a-body" style="margin-top:14px"></div>
+  <div id="a-unlocked"></div>
+</div>
+
+<!-- ajustes -->
+<div class="sheet" id="sheet-set">
+  <div class="grab"></div>
+  <h3>Ajustes</h3><div class="kicker">Tus metas, tu sincronización y tu respaldo</div>
+
+  <h4>Salud del iPhone</h4>
+  <div class="row-tog"><div><div class="rt">Sincronizar pasos y Stand</div><div class="rs" id="sync-state">—</div></div><div class="tog" id="s-sync" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <div class="row-tog" style="border:0"><div><div class="rt">Sincronizar ciclo</div><div class="rs">Toma el último sangrado de Salud</div></div><div class="tog" id="s-synccyc" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <button class="ghostbtn" onclick="syncNow()">🔄 Buscar datos del servidor</button>
+  <div class="f-hint" id="sync-hint">iOS no deja que una app web lea Salud directamente. La sincronización usa el Atajo <b>Sync Fit Journey</b>: lee tus pasos, tus horas de pie y tu último sangrado de la app Salud y abre esta app con esos datos. Córrelo desde el widget de Atajos o déjalo automático a una hora fija.</div>
+
+  <h4>Ciclo</h4>
+  <span class="f-lbl">Inicio de tu último periodo</span><input class="f-in" id="s-cycle" type="date">
+  <div class="f2"><div><span class="f-lbl">Duración del ciclo</span><input class="f-in" id="s-clen" type="number" inputmode="numeric"></div>
+  <div><span class="f-lbl">Días de sangrado</span><input class="f-in" id="s-bleed" type="number" inputmode="numeric"></div></div>
+
+  <h4>Metas</h4>
+  <div class="f2"><div><span class="f-lbl">Proteína (g)</span><input class="f-in" id="s-prot" type="number" inputmode="numeric"></div>
+  <div><span class="f-lbl">Calorías</span><input class="f-in" id="s-kcal" type="number" inputmode="numeric"></div></div>
+  <div class="f2"><div><span class="f-lbl">Pasos</span><input class="f-in" id="s-steps" type="number" inputmode="numeric"></div>
+  <div><span class="f-lbl">Stanleys</span><input class="f-in" id="s-water" type="number" step="0.25" inputmode="decimal"></div></div>
+  <span class="f-lbl">Ventana entre ingestas (horas)</span><input class="f-in" id="s-fast" type="number" step="0.5" inputmode="decimal">
+
+  <h4>Wegovy</h4>
+  <div class="f2"><div><span class="f-lbl" style="margin-top:0">Día de inyección</span>
+    <select class="f-in" id="s-wday"><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option></select></div>
+  <div><span class="f-lbl" style="margin-top:0">Dosis</span><input class="f-in" id="s-wdose" placeholder="0.25 mg"></div></div>
+
+  <h4>Notificaciones</h4>
+  <button class="ghostbtn" onclick="askNotif()" style="margin-top:0">🔔 Activar notificaciones</button>
+  <div class="f-hint">iOS solo permite avisos de una web app instalada, y no siempre con la app cerrada. Para lo que no puedes fallar, usa también Recordatorios.</div>
+
+  <h4>Respaldo</h4>
+  <button class="ghostbtn" onclick="exportData()" style="margin-top:0">⬇️ Copiar respaldo (JSON)</button>
+  <button class="ghostbtn" onclick="importData()">⬆️ Restaurar desde respaldo</button>
+
+  <button class="savebtn" onclick="saveSettings()">Guardar ajustes</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ UTIL ============ */
+const KEY='fitjourney_v1';
+const todayISO=()=>iso(new Date());
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseISO(s){const[a,b,c]=String(s).split('-').map(Number);return new Date(a,b-1,c);}
+function addDays(s,n){const d=parseISO(s);d.setDate(d.getDate()+n);return iso(d);}
+function daysBetween(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000);}
+function nowHM(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MON=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fmtDate(s){const d=parseISO(s);return DOW[d.getDay()]+' '+d.getDate()+' de '+MON[d.getMonth()];}
+function fmtShort(s){const d=parseISO(s);return d.getDate()+' '+MON[d.getMonth()].slice(0,3);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2600);}
+function trim(n){return (Math.round(n*100)/100).toString();}
+
+/* ============ HÁBITOS BASE ============ */
+const DEF_HABITS=[
+ {id:'chia',ic:'🌾',bg:'blush',n:'Chía reposada en agua',dose:'1 cda · primera ingesta',g:'manana',freq:'daily',time:'06:50',anchor:'Al despertar',remind:1,nag:1,ring:1,breaks:1,metric:'Digestión',
+  k:'Fibra mucilaginosa soluble',
+  why:['Al reposar toda la noche forma un gel denso que "pinta" las paredes del estómago y duodeno: la malla viscosa duodenal.',
+       'Amortiguador glucémico: frena la velocidad a la que los carbohidratos del desayuno pasan a la sangre. Aplana la curva postprandial hasta 75%.',
+       'El Wegovy enlentece el tránsito intestinal; la chía hidratada añade volumen y agua al bolo fecal y previene el estreñimiento sin irritar el colon.'],
+  when:[['Días 1–5','Digestión más fluida, evacuaciones matutinas regulares y completas, cero pesadez o gastritis mañanera.'],
+        ['Semanas 1–2','Caída drástica en los picos de glucosa tras el desayuno y desaparece el hambre voraz de las 11 am.']]},
+ {id:'inositol',ic:'☕',bg:'peach',n:'B-fit Inositol 40:1',dose:'Con tu café',g:'manana',freq:'daily',time:'07:30',anchor:'Al despertar',remind:1,nag:1,ring:1,breaks:0,metric:'Andrógenos / piel',
+  k:'2,000 mg mio-inositol + 50 mg D-chiro',
+  why:['Restablece los segundos mensajeros intracelulares que traducen la señal de la insulina — arregla la "cerradura" celular.',
+       'Al restaurar la acción de la insulina en las células tecales del ovario, frena la enzima CYP17A1 y baja la testosterona libre y la androstenediona.',
+       'Menos testosterona libre = las glándulas sebáceas producen menos sebo y se bloquea la miniaturización del folículo piloso.'],
+  when:[['Semanas 1–2','Se apaga el "food noise" de media mañana, más saciedad tras comer y energía estable sin bajón de mediodía.'],
+        ['Mes 1–2','Menos grasa en zona T, menos brotes de acné quístico en mandíbula, se frena la caída de cabello y se regularizan tus ciclos ovulatorios.']]},
+ {id:'semillas',ic:'🌻',bg:'peach',n:'Ciclado de semillas',dose:'1 cda de cada una, molidas',g:'manana',freq:'cycle',time:'08:00',anchor:'',remind:1,nag:1,ring:1,breaks:1,metric:'Andrógenos / piel',
+  k:'Seed cycling según tu fase',
+  why:['Días 1–12 (folicular): calabaza + linaza molida. El zinc apoya la maduración folicular y la respuesta a la FSH; los lignanos inhiben la 5-α-reductasa y evitan que la testosterona se convierta en DHT.',
+       'Día 13 en adelante: girasol + ajonjolí. La vitamina E vasculariza el cuerpo lúteo para producir progesterona de calidad.',
+       'El selenio asiste al hígado en la Fase II de desintoxicación para depurar el exceso de estrógenos.',
+       'Siempre molidas: enteras, la fibra exterior impide absorber los fitoestrógenos y la vitamina E.'],
+  when:[['Mes 1','SPM mucho más suave: menor inflamación mamaria, menos irritabilidad, menos retención en la segunda mitad del ciclo.'],
+        ['Mes 2–3','Sangrados de mejor color y consistencia, menos grasa en cuero cabelludo, hebra de cabello más gruesa.']]},
+ {id:'vinagre',ic:'🧪',bg:'rose',n:'Vinagre de manzana',dose:'1 cda en agua · 15 min antes',g:'comidas',freq:'daily',time:'13:45',anchor:'Antes de comer',remind:1,nag:1,ring:1,breaks:0,metric:'Insulina / glucosa',nuevo:1,
+  k:'Ácido acético · con "la madre"',
+  why:['Inhibe temporalmente la enzima α-amilasa en saliva y estómago: los almidones se descomponen mucho más lento.',
+       'Activa la AMPK muscular, facilitando que el músculo capte glucosa vía GLUT4 sin picos de insulina.',
+       'Reduce el pico de glucosa postprandial hasta 30% y el de insulina hasta 20%, dejando libre a la lipasa HSL.',
+       'Tómalo con popote de vidrio o metal y enjuágate la boca después para no exponer el esmalte dental.'],
+  when:[['Inmediato','Menos somnolencia y menos antojo dulce después de comer.'],
+        ['Semanas 2–4','Curvas de glucosa postprandial más planas y menos hambre entre comidas.']]},
+ {id:'secuencia',ic:'🥩',bg:'rose',n:'Secuencia quirúrgica',dose:'Fibra → proteína → carbohidrato',g:'comidas',freq:'daily',time:'14:00',anchor:'Antes de comer',remind:0,nag:0,ring:1,breaks:0,metric:'Insulina / glucosa',nuevo:1,
+  k:'El orden sí altera el producto',
+  why:['1º fibra soluble y vegetales: crean una malla viscosa en el duodeno que frena la entrada de glucosa.',
+       '2º proteína y grasa saludable: estimulan CCK y PYY (hormonas de saciedad) y nutren el músculo.',
+       '3º carbohidratos y almidones: se absorben lentamente al final, sin causar picos.',
+       'Aplana la curva glucémica hasta 75% y evita que la insulina estimule la CYP17A1 ovárica.'],
+  when:[['Inmediato','Saciedad más larga y cero bajón de energía después de comer.'],
+        ['Semanas 2–4','Menos antojos vespertinos y curvas de insulina consistentemente planas.']]},
+ {id:'cruciferas',ic:'🥦',bg:'blush',n:'Crucíferas',dose:'Brócoli, coliflor, col o coles de Bruselas',g:'comidas',freq:'week',per:4,time:'14:00',anchor:'',remind:0,nag:0,ring:1,breaks:1,metric:'Andrógenos / piel',nuevo:1,
+  k:'Indol-3-carbinol y sulforafano',
+  why:['En fase folicular y ovulatoria (días 6–16) tus estrógenos suben fuerte y el hígado necesita soporte en Fase I y II de desintoxicación.',
+       'El I3C y el sulforafano dirigen la conversión de estrógenos hacia su vía protectora (2-hidroxiestrona) en lugar de la inflamatoria.'],
+  when:[['Semanas 2–4','Menos retención de líquidos e inflamación mamaria en la segunda mitad del ciclo.'],
+        ['Mes 2–3','Piel más limpia y SPM notablemente más suave.']]},
+ {id:'stand',ic:'⌚',bg:'mauve',n:'Stand Goal + Standing Desk',dose:'8–10 h · 40 min sentada / 15–20 de pie',g:'mov',freq:'daily',time:'09:00',anchor:'',remind:1,nag:0,ring:1,breaks:0,metric:'Insulina / glucosa',sync:'stand',
+  k:'Romper la inactividad neuromuscular',
+  why:['Sentada más de 60 min seguidos, la enzima LPL de tus músculos cae más de 90% y aparece resistencia fisiológica temporal a la insulina.',
+       'Al trabajar de pie, las microcontracciones de pantorrillas y cuádriceps fuerzan a las vesículas GLUT4 a la superficie celular.',
+       'Tus músculos absorben glucosa de forma independiente de la insulina: protege tu páncreas y deja libre a la lipasa HSL.',
+       'Hack post-comida: trabaja de pie los 20 minutos inmediatamente después de comer — reduce el pico de glucosa hasta 50%.'],
+  when:[['Inmediato','Menos pesadez y estancamiento venoso en piernas al final del día.'],
+        ['Semanas 1–2','Menos retención de líquido extracelular que distorsiona la báscula.']]},
+ {id:'pasos',ic:'🚶‍♀️',bg:'mauve',n:'Pasos',dose:'+2,000 sobre tu promedio',g:'mov',freq:'daily',time:'20:00',anchor:'',remind:1,nag:0,ring:1,breaks:0,metric:'Insulina / glucosa',sync:'steps',
+  k:'Sobrecarga progresiva de NEAT',
+  why:['Saltar de golpe a 10,000 pasos sería +320% de volumen: fatiga del SNC, sobrecarga articular y pico compensatorio de cortisol.',
+       'Subir a ~5,120 es un incremento sostenible de ~65% que tu sistema nervioso y tu ciclo pueden asimilar.',
+       'Equivale a 80–100 kcal extra diarias de oxidación grasa pura: 600–700 kcal a la semana.',
+       'Divídelos: 10 min de caminata postprandial (~1,100 pasos) + 10 min en la mañana (~1,000 pasos).'],
+  when:[['Semanas 1–2','Mejor digestión y energía sostenida por la tarde.'],
+        ['Semanas 3–4','Sensibilidad a la insulina potenciada, en sinergia directa con el Wegovy.']]},
+ {id:'pesas',ic:'🏋️‍♀️',bg:'mauve',n:'Fuerza multiarticular',dose:'Sentadilla, peso muerto, prensa, remo',g:'mov',freq:'week',per:3,time:'07:00',anchor:'',remind:1,nag:0,ring:1,breaks:0,metric:'Músculo',nuevo:1,
+  k:'Blindaje de tu masa muscular',
+  why:['Con Wegovy el apetito baja de forma natural; sin estímulo mecánico, hasta 30–40% del peso perdido puede ser masa muscular.',
+       'La tensión mecánica activa la vía CaMK/AMPK y fuerza a los GLUT4 a absorber glucosa sin insulina.',
+       'Protege tu TMB y garantiza que cada gramo perdido en el InBody sea grasa corporal.'],
+  when:[['Semanas 2–4','Más fuerza y mejor tolerancia al esfuerzo, sobre todo en fase ovulatoria.'],
+        ['Mes 2–3','SMM estable o al alza en el InBody mientras el % de grasa baja.']]},
+ {id:'magnesio',ic:'💊',bg:'wine',n:'2 cáps glicinato de magnesio',dose:'20–40 min antes de dormir',g:'noche',freq:'daily',time:'21:40',anchor:'Antes de dormir',remind:1,nag:1,ring:1,breaks:0,metric:'Cortisol / sueño',
+  k:'Cofactor de insulina y modulador del eje HPA',
+  why:['Cofactor esencial en la autofosforilación de los receptores de insulina: amaneces altamente sensible a la insulina.',
+       'Inhibe la hiperactividad suprarrenal nocturna, bajando el cortisol y la sobreproducción de DHEA-S.',
+       'Estimula receptores GABA y relaja la musculatura lisa, facilitando el sueño profundo N3/REM donde se libera la hormona del crecimiento.',
+       'Glicinato porque la glicina baja la temperatura corporal central y no causa efecto laxante como el citrato.'],
+  when:[['Días 1–3','Relajación física al acostarte, más facilidad para conciliar el sueño, menos calambres nocturnos.'],
+        ['Semanas 1–2','Despertar realmente descansada y caída drástica en la ansiedad nocturna por carbohidratos.'],
+        ['Semanas 3–4','Glucosa e insulina en ayunas más estables, menos retención por cortisol.']]},
+ {id:'piernas',ic:'🦵',bg:'wine',n:'Piernas a 90°',dose:'20 min · después del magnesio',g:'noche',freq:'daily',time:'22:00',anchor:'Antes de dormir',remind:1,nag:1,ring:1,breaks:0,metric:'Retención de líquidos',
+  k:'Viparita Karani',
+  why:['Retorno venoso y drenaje linfático: por gravedad moviliza la linfa y los fluidos acumulados en pantorrillas y tobillos.',
+       'Estimula los barorreceptores carotídeos y aórticos → activa el nervio vago y el sistema parasimpático de inmediato.',
+       'Desactiva el eje HPA y baja el cortisol nocturno, que es lo que estimula la DHEA-S y la gluconeogénesis hepática.',
+       'Reduce la presión intraabdominal sobre útero y ovarios: alivia la congestión pélvica en fase menstrual y lútea.',
+       'Respira 4 segundos adentro / 6 afuera con la luz tenue para preparar la melatonina.'],
+  when:[['Días 1–3','Ligereza instantánea en piernas y pies, baja la frecuencia cardíaca en reposo, tobillos desinflamados.'],
+        ['Semanas 1–2','Te duermes más rápido y el agua extracelular se estabiliza en el InBody.'],
+        ['Semanas 3–4','Despertares con más energía, menos calambres y mejor recuperación tras las pesas.']]}
+];
+
+/* ============ BIBLIOTECA PROGRESIVA ============ */
+const LIB=[
+ {id:'ventana4h',tag:'Metabolismo',t:'La ventana de 4 h entre ingestas',open:1,unlocks:['glucagon','autofagia'],
+  b:['Cada bocado con calorías —aunque sea un puñado de nueces— levanta insulina y apaga la lipasa sensible a hormonas (HSL). Mientras la insulina esté alta, tu tejido adiposo está en modo "guardar", no en modo "soltar".',
+     'Cuatro horas limpias permiten que la insulina regrese a su nivel basal, que el páncreas descanse de secretar, y que la HSL vuelva a romper triglicéridos sin interrupción.',
+     'Agua natural, café solo, té e infusiones sin azúcar no rompen la ventana: no aportan sustrato que dispare insulina.',
+     'Ojo con el contexto: estando en titulación de Wegovy tu apetito ya está suprimido. Espaciar comidas es fácil, pero tienes que cuidar que sigan cabiendo tus 110–120 g de proteína en el día. Menos comidas no puede significar menos proteína.']},
+ {id:'hsl',tag:'Metabolismo',t:'Lipasa HSL: la enzima que decide',open:1,unlocks:['lipolisis-nocturna','cortisol-grasa'],
+  b:['La lipasa sensible a hormonas es la enzima que corta los triglicéridos guardados en tu tejido adiposo y libera los ácidos grasos a la sangre para que se quemen.',
+     'Su interruptor principal es la insulina: insulina alta la apaga, insulina baja la enciende. Por eso todo tu protocolo —chía, inositol, secuencia quirúrgica, vinagre— apunta al mismo lugar: mantener la curva plana.',
+     'Las catecolaminas (adrenalina, noradrenalina) la activan, y por eso caminar o entrenar la despierta. Pero si el estímulo es tan agresivo que dispara cortisol crónico, el efecto se revierte.']},
+ {id:'cyp17a1',tag:'Hormonas',t:'CYP17A1: por qué la insulina te sale en la piel',open:1,unlocks:['dhea-s','sop-fenotipos'],
+  b:['CYP17A1 es la enzima de las células tecales del ovario que convierte precursores en androstenediona y testosterona.',
+     'Cuando la insulina está crónicamente alta, actúa como una falsa gonadotropina: se pega a sus receptores ováricos y acelera esta enzima. Resultado: más testosterona libre circulando.',
+     'Esa testosterona explica tres cosas que quizá ya viste: sebo más espeso y acné en mandíbula, adelgazamiento de la hebra de cabello, y vello más grueso en zonas dependientes de andrógenos.',
+     'La conclusión práctica es incómoda pero clara: tu piel y tu cabello son un termómetro de tu curva de insulina, no un problema cosmético aislado.']},
+ {id:'glut4',tag:'Movimiento',t:'GLUT4: comer glucosa sin gastar insulina',open:1,unlocks:['soleo','sensibilidad-ciclo'],
+  b:['Los GLUT4 son transportadores que viven en vesículas dentro de tus células musculares. Cuando algo los llama, migran a la superficie y empiezan a meter glucosa de la sangre al músculo.',
+     'Los llaman dos señales independientes: la insulina, o la contracción muscular. La segunda es gratis — no le cuesta nada a tu páncreas.',
+     'Por eso caminar 10 minutos después de comer, o pararte con tu escritorio elevable, baja la glucosa postprandial sin una gota extra de insulina.',
+     'Es la palanca con mejor relación esfuerzo/resultado de todo tu protocolo.']},
+ {id:'progesterona',tag:'Ciclo',t:'Progesterona lútea: tu freno de mano',open:1,unlocks:['alopregnanolona','tmb-lutea'],
+  b:['Después de ovular, el folículo se convierte en cuerpo lúteo y produce progesterona durante unos 12–14 días.',
+     'No es solo una hormona de fertilidad. Es ansiolítica (vía GABA), termogénica (sube tu gasto en reposo), diurética (bloquea aldosterona) y antiinflamatoria.',
+     'Si no ovulas, no hay cuerpo lúteo y no hay progesterona: te quedas en dominancia estrogénica relativa. Eso se siente como ansiedad, insomnio, retención y antojos voraces en la segunda mitad del ciclo.',
+     'Por eso proteger la ovulación importa aunque no busques embarazo.']},
+ {id:'fsh',tag:'Ciclo',t:'FSH y la calidad de tu folículo',open:1,unlocks:['calidad-folicular','seed-cycling-evidencia'],
+  b:['La FSH se libera desde la hipófisis al arrancar el ciclo y recluta un grupo de folículos en el ovario. Conforme maduran, ellos empiezan a secretar estradiol.',
+     'Un folículo que crece bien produce buen estrógeno, ovula bien, y deja un cuerpo lúteo que produce buena progesterona. Toda la segunda mitad de tu ciclo se decide en la primera.',
+     'Por eso los primeros 12 días importan tanto: zinc, sueño, proteína suficiente y cortisol bajo.']},
+ {id:'neat',tag:'Movimiento',t:'NEAT: el gasto que nadie cuenta',open:1,unlocks:['caminata-postprandial','pasos-cortisol'],
+  b:['NEAT es toda la energía que quemas fuera del ejercicio formal: caminar, estar de pie, moverte, gesticular, subir escaleras.',
+     'En dos personas del mismo peso, el NEAT puede diferir hasta 2,000 kcal al día. Es la variable más grande y más ignorada del gasto energético.',
+     'Subir de 3,118 a 5,120 pasos son unas 80–100 kcal extra al día: 600–700 a la semana. No es espectacular en un día, pero es acumulativo y no dispara hambre compensatoria como el cardio intenso.']},
+ {id:'wegovy',tag:'Tratamiento',t:'Qué hace exactamente la semaglutida',open:1,unlocks:['titulacion','masa-magra-glp1'],
+  b:['La semaglutida imita al GLP-1, una hormona que tu intestino libera al comer. Actúa en tres frentes: enlentece el vaciamiento gástrico, potencia la secreción de insulina solo cuando hay glucosa, y actúa en el hipotálamo reduciendo el apetito y el "food noise".',
+     'Tarda de 2 a 4 semanas en alcanzar concentración plasmática estable, y la vida media es de ~1 semana — por eso es una inyección semanal.',
+     'Efectos secundarios comunes al subir dosis: náusea, reflujo, estreñimiento. La chía y el agua atacan directamente el tercero.']},
+
+ /* --- nivel 2 --- */
+ {id:'glucagon',tag:'Metabolismo',t:'Glucagón, el otro lado de la moneda',unlocks:['gluconeogenesis'],
+  b:['Si la insulina es la hormona de guardar, el glucagón es la de sacar. Sube cuando la glucosa baja y le ordena al hígado liberar glucosa y al tejido adiposo soltar grasa.',
+     'Lo importante no es el nivel absoluto de ninguno, sino la razón insulina/glucagón. Comer cada dos horas mantiene esa razón siempre inclinada hacia "guardar".',
+     'Esta es la lógica de fondo de tu ventana de 4 horas: no es magia del ayuno, es inclinar el balance hormonal hacia el otro lado durante un rato.']},
+ {id:'autofagia',tag:'Metabolismo',t:'Autofagia: qué es y qué no',unlocks:['ayuno-mujeres'],
+  b:['La autofagia es el reciclaje de componentes celulares dañados. Se estimula con restricción energética y se inhibe con mTOR (que la proteína y la insulina activan).',
+     'Aquí toca ser honesta: casi todo lo que se dice de autofagia en redes viene de estudios en levaduras y ratones. En humanos no sabemos con precisión a qué hora "se enciende", y ciertamente no a las 4 horas de no comer.',
+     'Tu ventana de 4 h tiene una justificación buena y suficiente —insulina y descanso pancreático— sin necesidad de invocar autofagia.']},
+ {id:'lipolisis-nocturna',tag:'Metabolismo',t:'Por qué quemas grasa mientras duermes',
+  b:['En el sueño profundo de ondas lentas (N3) se libera el pulso más grande de hormona del crecimiento del día.',
+     'La GH tiene dos efectos que te interesan: es lipolítica (moviliza grasa) y anabólica para tejido muscular vía IGF-1. Reparas músculo y sueltas grasa al mismo tiempo.',
+     'Todo lo que hagas para entrar antes a N3 —magnesio, piernas a 90°, luz tenue, respiración 4/6— es literalmente parte de tu protocolo de composición corporal.']},
+ {id:'cortisol-grasa',tag:'Hormonas',t:'Cortisol y grasa visceral',
+  b:['El tejido adiposo visceral tiene mucha más densidad de receptores de glucocorticoides que el subcutáneo. Cortisol alto de forma crónica dirige el almacenamiento preferentemente ahí.',
+     'Además el cortisol estimula gluconeogénesis hepática (más glucosa) y la producción suprarrenal de DHEA-S.',
+     'Es la razón por la que dormir mal y vivir estresada puede sabotear un déficit calórico impecable. Tu grasa visceral en nivel 7 responde muy bien a esto.']},
+ {id:'dhea-s',tag:'Hormonas',t:'DHEA-S: el andrógeno del estrés',
+  b:['La DHEA-S se produce en la corteza suprarrenal, no en el ovario, y responde al eje HPA — es decir, al estrés.',
+     'Sus efectos visibles: acné quístico mandibular y en cuello, adelgazamiento del cabello vía conversión a DHT, vello terminal en barbilla y línea alba.',
+     'Y uno invisible: empeora la señalización de insulina en músculo y tejido adiposo, cerrando un círculo con el hiperinsulinismo.',
+     'Aquí está el porqué de tu magnesio nocturno y tus piernas a 90°: bajar cortisol nocturno es bajar DHEA-S.']},
+ {id:'sop-fenotipos',tag:'Hormonas',t:'Los cuatro fenotipos de SOP',unlocks:['inositol-evidencia'],
+  b:['El síndrome de ovario poliquístico no es una sola cosa. Los criterios de Rotterdam definen cuatro combinaciones de: hiperandrogenismo, disfunción ovulatoria y ovarios poliquísticos en ultrasonido.',
+     'El fenotipo A (los tres) suele tener la peor resistencia a la insulina; el fenotipo D (sin hiperandrogenismo) el perfil metabólico más benigno.',
+     'Esto importa porque el tratamiento cambia: no todas las personas con SOP se benefician igual del inositol o de bajar carbohidratos.',
+     'Vale la pena que le preguntes a tu médica cuál es tu fenotipo — cambia qué deberías estar midiendo.']},
+ {id:'soleo',tag:'Movimiento',t:'El sóleo, tu bomba metabólica',unlocks:['standing-desk-evidencia'],
+  b:['El sóleo es un músculo de la pantorrilla con una proporción altísima de fibras tipo I (lentas, oxidativas, resistentes a la fatiga).',
+     'Puede contraerse durante horas sin cansarse y sin subir el cortisol, oxidando glucosa y grasas de la sangre de forma continua.',
+     'Es el músculo que trabajas cuando estás de pie en tu escritorio elevable. Por eso pararte 15 minutos por hora mueve más la aguja glucémica de lo que su costo de esfuerzo sugiere.']},
+ {id:'sensibilidad-ciclo',tag:'Ciclo',t:'Tu sensibilidad a la insulina cambia cada semana',
+  b:['En fase folicular y alrededor de la ovulación, el estrógeno mejora la sensibilidad a la insulina: tu cuerpo tolera mejor los carbohidratos.',
+     'En fase lútea, la progesterona la reduce ligeramente y sube la temperatura basal y el gasto.',
+     'Consecuencia práctica: los mismos carbohidratos no te caen igual el día 10 que el día 24. Y un "estancamiento" en la segunda mitad del ciclo casi siempre es agua, no grasa.',
+     'Por eso conviene comparar InBody del mismo día del ciclo, no semana contra semana.']},
+ {id:'alopregnanolona',tag:'Ciclo',t:'Alopregnanolona: por qué la fase lútea te cambia el humor',
+  b:['La progesterona se metaboliza en el cerebro a alopregnanolona, un modulador positivo de los receptores GABA-A — el mismo sistema sobre el que actúan los ansiolíticos.',
+     'En niveles estables, produce calma y sueño profundo. Pero la caída brusca al final de la fase lútea, justo antes del sangrado, es lo que muchos investigadores relacionan con el SPM y el trastorno disfórico premenstrual.',
+     'No es "falta de carácter": es una retirada neuroquímica. Saberlo cambia cómo te tratas esos días.']},
+ {id:'tmb-lutea',tag:'Ciclo',t:'Por qué quemas más en fase lútea',unlocks:['antojos-luteos'],
+  b:['La progesterona es termogénica: eleva la temperatura corporal basal unos 0.3–0.5 °C y aumenta el gasto en reposo entre 8 y 10%.',
+     'Con tu TMB de ~1,390 kcal, eso son unas 110–140 kcal extra por día en la segunda mitad del ciclo.',
+     'El problema es que el hambre sube en la misma proporción, o más. El gasto extra es real, pero rara vez sobra.']},
+ {id:'calidad-folicular',tag:'Ciclo',t:'Qué determina la calidad de un folículo',
+  b:['Un ovocito tarda unos 90 días en madurar desde folículo primordial hasta el ciclo en que ovula. Lo que haces hoy se ve en tres meses.',
+     'Los factores que más pesan: sensibilidad a la insulina, estrés oxidativo, disponibilidad de zinc y vitamina D, sueño, y función tiroidea.',
+     'Por eso los cambios en tus ciclos no se juzgan en un mes. La ventana honesta para evaluar seed cycling, inositol o cualquier intervención ovárica es de 3 ciclos.']},
+ {id:'seed-cycling-evidencia',tag:'Honestidad',t:'Seed cycling: qué dice la evidencia',
+  b:['Vale la pena decirlo con claridad: el seed cycling como protocolo —calabaza y linaza en folicular, girasol y ajonjolí en lútea— casi no tiene estudios clínicos que lo respalden directamente.',
+     'Lo que sí tiene evidencia son los ingredientes por separado: los lignanos de la linaza modulan el metabolismo de estrógenos, el zinc participa en la función ovárica, la vitamina E y el selenio tienen roles antioxidantes.',
+     'La mecánica de "esta semilla en esta fase" es una extrapolación razonable, no un hecho demostrado.',
+     'Traducción práctica: es un hábito barato, seguro y nutricionalmente bueno. Vale la pena mantenerlo. Solo no le atribuyas a él los cambios que probablemente vienen del inositol, el déficit y el Wegovy.']},
+ {id:'caminata-postprandial',tag:'Movimiento',t:'Los 10 minutos que más rinden',unlocks:['vinagre-evidencia'],
+  b:['Caminar entre 2 y 10 minutos después de comer reduce de forma consistente el pico de glucosa postprandial en estudios controlados.',
+     'El mecanismo es GLUT4 por contracción: el músculo secuestra glucosa antes de que llegue al pico.',
+     'La ventana importa: los primeros 15–30 minutos tras la comida son los que cuentan. Caminar dos horas después ya no aplana ese pico.',
+     'Si te toca junta, tu escritorio elevable hace el mismo trabajo.']},
+ {id:'pasos-cortisol',tag:'Movimiento',t:'Cuándo el ejercicio empieza a jugar en tu contra',
+  b:['El ejercicio es un estresor. En la dosis correcta produce adaptación; en exceso y sin recuperación produce cortisol crónico, retención de líquidos, peor sueño y estancamiento.',
+     'Las señales de que te pasaste: frecuencia cardíaca en reposo elevada, sueño fragmentado, antojos que no existían, y peso que sube sin cambios en la dieta.',
+     'Por eso subir 2,000 pasos es mejor estrategia que perseguir 10,000 de golpe: la adherencia y el cortisol importan más que el número.']},
+ {id:'titulacion',tag:'Tratamiento',t:'Por qué la dosis sube tan lento',
+  b:['El esquema estándar de semaglutida sube cada 4 semanas: 0.25 → 0.5 → 1.0 → 1.7 → 2.4 mg.',
+     'La razón es tolerancia digestiva. Los receptores GLP-1 del tracto gastrointestinal se desensibilizan gradualmente; subir rápido significa náusea, vómito y abandono del tratamiento.',
+     'La dosis de 0.25 mg no está pensada para bajar peso: es una dosis de acostumbramiento. Esperar resultados de báscula en las primeras 4 semanas es esperar algo que el fármaco no está haciendo todavía.']},
+ {id:'masa-magra-glp1',tag:'Tratamiento',t:'El riesgo real de perder músculo',unlocks:['proteina-leucina'],
+  b:['En los ensayos de GLP-1, una fracción importante del peso perdido es masa magra — las cifras reportadas van de 25% a 40% según el estudio y la población.',
+     'Eso no es exclusivo de estos fármacos: cualquier déficit agresivo hace lo mismo. Pero el GLP-1 baja tanto el apetito que es muy fácil quedarse corta de proteína sin darte cuenta.',
+     'Las dos contramedidas con evidencia: proteína suficiente y entrenamiento de fuerza. No una u otra, las dos.',
+     'Tus 26.3 kg de SMM en el InBody son la métrica a vigilar. Si baja mientras baja el peso, hay que corregir antes de subir dosis.']},
+
+ /* --- nivel 3 --- */
+ {id:'gluconeogenesis',tag:'Metabolismo',t:'Gluconeogénesis: de dónde sale la glucosa en ayuno',
+  b:['Tu hígado puede fabricar glucosa desde lactato, glicerol y aminoácidos. Es un proceso normal y necesario: el cerebro necesita glucosa constante.',
+     'El detalle relevante: los aminoácidos vienen de algún lado. Con proteína dietaria suficiente, vienen de la dieta. Sin ella, el cuerpo tiene menos reparo en tomar del músculo.',
+     'Otro apunte para tu caso: el cortisol matutino estimula gluconeogénesis. Si despiertas con glucosa alta sin haber comido, eso —y no la cena— suele ser el motivo.']},
+ {id:'ayuno-mujeres',tag:'Honestidad',t:'Ayuno intermitente en mujeres: los matices',
+  b:['La mayoría de los estudios iniciales de ayuno se hicieron en hombres o en animales macho. La extrapolación a mujeres en edad reproductiva no es directa.',
+     'Hay señales de que ventanas de ayuno muy agresivas pueden afectar el eje hipotálamo-hipófisis-ovario en algunas mujeres, sobre todo con déficit calórico simultáneo y entrenamiento intenso.',
+     'Una ventana de 4 h entre comidas no es ayuno intermitente y no cae en ese territorio. Pero si alguna vez consideras 16:8 o más, conviene decidirlo con tu médica y vigilando tu ciclo.',
+     'Una regla útil: si tu ciclo se alarga, se acorta o desaparece, la estrategia se pasó de mano — independientemente de lo que diga la báscula.']},
+ {id:'inositol-evidencia',tag:'Honestidad',t:'Inositol: qué tan sólida es la evidencia',
+  b:['El mio-inositol tiene evidencia razonable en SOP: varios ensayos y metaanálisis muestran mejoras en sensibilidad a la insulina, tasa de ovulación y andrógenos.',
+     'La proporción 40:1 (mio:D-chiro) imita la razón fisiológica del plasma humano y es la más estudiada en ovario.',
+     'Los efectos suelen aparecer en 8–12 semanas, no en días. Y la magnitud es moderada: mejora un cuadro, no lo revierte solo.',
+     'Es de los suplementos con mejor perfil beneficio/riesgo de tu lista, pero sigue siendo un complemento, no el motor.']},
+ {id:'vinagre-evidencia',tag:'Honestidad',t:'Vinagre de manzana: separando señal de ruido',
+  b:['Lo que sí está replicado: 1–2 cucharadas de vinagre antes de una comida con almidón reducen el pico de glucosa postprandial de forma modesta pero real.',
+     'Lo que no está demostrado: que "queme grasa", desintoxique, o produzca pérdida de peso significativa por sí solo. Los estudios que reportan pérdida de peso muestran diferencias pequeñas y con muchas limitaciones.',
+     'Precauciones reales: erosiona esmalte dental (usa popote y enjuaga), puede empeorar reflujo, e interactúa con algunos diuréticos y con la insulina.',
+     'Con Wegovy, que ya enlentece el vaciamiento gástrico, si notas náusea o pesadez al agregarlo, quítalo. No es indispensable.']},
+ {id:'proteina-leucina',tag:'Nutrición',t:'Por qué la proteína se reparte, no se acumula',
+  b:['La síntesis proteica muscular responde a pulsos: necesitas unos 25–35 g de proteína de calidad con suficiente leucina (~2.5 g) para disparar el estímulo.',
+     'Comerte 100 g de proteína en una sola comida no equivale a repartirlos en tres o cuatro. El estímulo se satura.',
+     'Con el apetito suprimido por el GLP-1, la estrategia práctica es asegurar la proteína primero en cada comida —antes de que te llenes— en vez de dejarla para el final.',
+     'Fuentes densas y fáciles cuando no tienes hambre: queso cottage, yogurt griego, huevo, atún, pechuga, y si hace falta, un batido.']},
+ {id:'standing-desk-evidencia',tag:'Honestidad',t:'Escritorio elevable: qué esperar de verdad',
+  b:['Estar de pie quema aproximadamente 0.15 kcal por minuto más que estar sentada. En 3 horas al día son unas 25–30 kcal. Como herramienta de gasto calórico, es despreciable.',
+     'Donde sí tiene efecto medible es en la glucosa postprandial, la actividad de la LPL muscular y la acumulación de líquido en piernas.',
+     'O sea: úsalo por la curva glucémica y la circulación, no esperando que mueva la báscula. Y alterna — estar de pie inmóvil muchas horas fatiga la espalda baja y no aporta más.']},
+ {id:'antojos-luteos',tag:'Ciclo',t:'Los antojos de la segunda mitad no son antojo',
+  b:['En fase lútea sube el gasto energético, baja ligeramente la sensibilidad a la insulina, y la serotonina cerebral cae con la progesterona.',
+     'El antojo de carbohidratos es en parte una búsqueda de triptófano para fabricar serotonina. Tiene una lógica bioquímica, no es debilidad.',
+     'Estrategias que funcionan mejor que resistir: subir proteína, asegurar magnesio, dormir bien, y planear un carbohidrato de calidad dentro del día en vez de pelear hasta romper.',
+     'Y una nota importante: si el hambre en fase lútea es enorme, a veces es señal de que el déficit del resto del mes es demasiado agresivo.']}
+];
+
+/* ============ ESTADO ============ */
+function seed(){
+  return {v:2, habits:JSON.parse(JSON.stringify(DEF_HABITS)),
+    log:{}, inbody:[{date:'2026-08-11',w:65.2,smm:26.3,pbf:27.6,fat:18.0,vis:7,bmi:24.5,tmb:1390,score:79,cd:12}],
+    cycles:['2026-07-31'], read:[],
+    set:{clen:28,bleed:5,prot:115,kcal:1400,steps:5120,waterQ:10,fastH:4,wday:2,wdose:'0.25 mg',sync:0,synccyc:0},
+    wegovy:['2026-08-04','2026-08-11']};
+}
+let S;
+try{ S=JSON.parse(localStorage.getItem(KEY))||seed(); }catch(e){ S=seed(); }
+if(!S||!S.habits) S=seed();
+if(!S.read) S.read=[];
+if(S.set.bleed==null) S.set.bleed=5;
+if(S.set.sync==null) S.set.sync=0;
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Sin espacio: borra fotos viejas');} }
+
+let VIEW=todayISO();
+function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null};
+  const L=S.log[d]; if(!L.t)L.t={}; if(!L.meals)L.meals=[]; if(!L.h)L.h={}; return L; }
+
+const BG={blush:'var(--blush-l)',peach:'var(--peach-l)',rose:'var(--rose-l)',mauve:'var(--mauve-l)',wine:'var(--wine-l)'};
+const GNAMES={manana:'Mañana',comidas:'Comidas',mov:'Movimiento',noche:'Noche'};
+
+/* ============ CICLO ============ */
+function cycleStart(){ return S.cycles[S.cycles.length-1]; }
+function avgLen(){ if(S.cycles.length<2) return S.set.clen||28;
+  let t=0,n=0; for(let i=1;i<S.cycles.length;i++){ const d=daysBetween(S.cycles[i-1],S.cycles[i]); if(d>18&&d<45){t+=d;n++;} }
+  return n?Math.round(t/n):(S.set.clen||28); }
+function cycleDay(d){ d=d||VIEW; let n=daysBetween(cycleStart(),d)+1; const L=avgLen(); if(n<1)n=1; while(n>L+10) n-=L; return n; }
+function phaseOf(n){ const B=S.set.bleed||5;
+  if(n<=B)return{i:0,name:'Fase menstrual',emo:'❄️',t:'Invierno hormonal',s:'Energía baja y retención natural. Prioriza descanso, magnesio y piernas a 90°. Hoy la báscula miente.'};
+  if(n<=12)return{i:1,name:'Fase folicular',emo:'🌱',t:'Primavera hormonal',s:'Estrógenos subiendo y mejor tolerancia a los carbohidratos. Buen momento para arrancar cosas nuevas.'};
+  if(n<=16)return{i:2,name:'Fase ovulatoria',emo:'☀️',t:'Verano hormonal',s:'Pico de estrógenos y máxima sensibilidad a la insulina del mes. Tu mejor ventana para pesas.'};
+  return{i:3,name:'Fase lútea',emo:'🍂',t:'Otoño hormonal',s:'Progesterona al mando: +100 a 300 kcal de TMB, pero también más antojos. Cuida sodio y sueño.'};}
+function seedsOf(n){ return n<=12 ? [['🎃','Calabaza','1 cda molida<br>Zinc + lignanos'],['🌰','Linaza','1 cda molida<br>Omega-3 + lignanos']]
+                                  : [['🌻','Girasol','1 cda molida<br>Vitamina E + selenio'],['🥣','Ajonjolí','1 cda molida<br>Lignanos + zinc']]; }
+function predictions(){
+  const L=avgLen(), st=cycleStart();
+  const nextP=addDays(st,L);
+  const ovu=addDays(st,L-14);
+  const fStart=addDays(ovu,-5), fEnd=addDays(ovu,1);
+  return {len:L,start:st,nextP,ovu,fStart,fEnd,
+    dNext:daysBetween(todayISO(),nextP), dOvu:daysBetween(todayISO(),ovu),
+    inFertile: daysBetween(fStart,todayISO())>=0 && daysBetween(todayISO(),fEnd)>=0};
+}
+
+/* ============ HOY ============ */
+function renderHoy(){
+  document.getElementById('h-date').textContent=fmtDate(VIEW)+(VIEW===todayISO()?'':' · día pasado');
+  const hr=new Date().getHours();
+  document.getElementById('h-greet').textContent=(hr<12?'Buenos días':hr<19?'Buenas tardes':'Buenas noches')+', Balbina 🌸';
+
+  const ds=document.getElementById('datestrip'); ds.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const k=addDays(todayISO(),-i), d=parseISO(k);
+    const has=S.log[k]&&Object.values(S.log[k].h||{}).some(Boolean);
+    const el=document.createElement('div');
+    el.className='ds'+(k===VIEW?' on':'')+(has?' has':'');
+    el.innerHTML=`<div class="d">${DOW[d.getDay()]}</div><div class="n">${d.getDate()}</div><div class="dot"></div>`;
+    el.onclick=()=>{VIEW=k;renderAll();};
+    ds.appendChild(el);
+  }
+
+  const L=day(VIEW);
+  const gc=document.getElementById('hgroups'); gc.innerHTML='';
+  ['manana','comidas','mov','noche'].forEach(g=>{
+    const hs=S.habits.filter(h=>h.g===g); if(!hs.length)return;
+    const sec=document.createElement('div'); sec.className='sec';
+    sec.innerHTML=`<span>${GNAMES[g]}</span><span class="add">＋</span>`;
+    sec.querySelector('.add').onclick=()=>newHabit(g);
+    gc.appendChild(sec);
+    hs.forEach(h=>{
+      const done=!!L.h[h.id];
+      let sub=h.dose||'';
+      if(h.freq==='cycle'){ const s=seedsOf(cycleDay()); sub='Hoy: '+s[0][1]+' + '+s[1][1]; }
+      if(h.freq==='week'){ sub=(h.dose?h.dose+' · ':'')+weekCount(h.id,VIEW)+' de '+(h.per||3)+' esta semana'; }
+      if(h.sync==='steps'&&L.steps!=null) sub=L.steps.toLocaleString('es-MX')+' de '+S.set.steps.toLocaleString('es-MX')+' pasos';
+      if(h.sync==='stand'&&L.stand!=null) sub=L.stand+' de 8 horas de pie';
+      const st=streak(h.id);
+      const el=document.createElement('div'); el.className='habit'+(done?' done':'');
+      el.innerHTML=`<div class="ic" style="background:${BG[h.bg]||'var(--rose-l)'}">${h.ic}</div>
+        <div class="tx"><b>${esc(h.n)}${h.nuevo?'<span class="tag-new">NUEVO</span>':''}${h.sync&&S.set.sync?'<span class="tag-sync">SALUD</span>':''}${st>2?'<span class="streak">🔥'+st+'</span>':''}</b>
+        <span>${done&&L.t[h.id]?'✓ '+L.t[h.id]+' · toca para cambiar hora':sub+(h.remind?' · 🔔 '+(h.time||''):'')}</span></div><div class="chk">✓</div>`;
+      el.querySelector('.chk').onclick=e=>{e.stopPropagation();toggleHabit(h);};
+      el.onclick=()=>openHabit(h);
+      gc.appendChild(el);
+    });
+  });
+
+  const ringH=S.habits.filter(h=>h.ring!==0);
+  const done=ringH.filter(h=>L.h[h.id]).length;
+  document.getElementById('hab-v').textContent=done+'/'+ringH.length;
+  document.getElementById('r-hab').style.strokeDashoffset=132-(132*(ringH.length?done/ringH.length:0));
+
+  const st=(L.wq||0)/4;
+  document.getElementById('agua-v').textContent=trim(st);
+  document.getElementById('agua-lbl').textContent=trim(st)+' / '+trim(S.set.waterQ/4)+' Stanleys';
+  document.getElementById('agua-l').textContent=(st*1.18).toFixed(2)+' L'+((L.wq||0)>=S.set.waterQ?' · meta cumplida ✓':'');
+  document.getElementById('r-agua').style.strokeDashoffset=132-(132*Math.min(1,(L.wq||0)/S.set.waterQ));
+  renderStanleys(L.wq||0);
+
+  const P=(L.meals||[]).reduce((a,m)=>a+(+m.p||0),0);
+  document.getElementById('prot-v').textContent=Math.round(P)+' g';
+  document.getElementById('r-prot').style.strokeDashoffset=132-(132*Math.min(1,P/S.set.prot));
+
+  renderFast(); renderWegovy();
+}
+function weekStart(d){const x=parseISO(d);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return iso(x);}
+function weekCount(id,d){let c=0;const ws=weekStart(d);for(let i=0;i<7;i++){const k=addDays(ws,i);if(S.log[k]&&S.log[k].h&&S.log[k].h[id])c++;}return c;}
+function streak(id){ let c=0,d=todayISO(); if(!(S.log[d]&&S.log[d].h&&S.log[d].h[id])) d=addDays(d,-1);
+  while(S.log[d]&&S.log[d].h&&S.log[d].h[id]){c++;d=addDays(d,-1);} return c; }
+
+function renderStanleys(wq){
+  const sw=document.getElementById('stanleys');
+  if(sw.children.length!==3){
+    sw.innerHTML='';
+    for(let i=0;i<3;i++){
+      const d=document.createElement('div'); d.className='stan';
+      d.innerHTML=`<svg width="54" height="86" viewBox="0 0 54 86">
+        <defs><clipPath id="cp${i}"><path d="M12 14 h30 l-3.5 62 a5 5 0 0 1 -5 4.5 h-13 a5 5 0 0 1 -5 -4.5 z"/></clipPath></defs>
+        <path d="M41 30 q11 5 11 17 q0 12 -11 17" fill="none" stroke="#C9A2BC" stroke-width="3"/>
+        <rect id="fill${i}" x="10" y="81" width="34" height="0" fill="#C9A2BC" clip-path="url(#cp${i})"/>
+        <path d="M12 14 h30 l-3.5 62 a5 5 0 0 1 -5 4.5 h-13 a5 5 0 0 1 -5 -4.5 z" fill="none" stroke="#C9A2BC" stroke-width="2.5"/>
+        <rect x="10" y="5" width="34" height="9" rx="3.5" fill="#fff" stroke="#C9A2BC" stroke-width="2.5"/>
+      </svg><div class="lbl">${i<2?'Stanley '+(i+1):'medio'}</div>`;
+      d.onclick=()=>{const f=(i+1)*4; day().wq=(day().wq>=f)?i*4:f; save(); renderHoy();};
+      sw.appendChild(d);
+    }
+  }
+  for(let i=0;i<3;i++){ const q=Math.max(0,Math.min(4,wq-i*4)), h=(q/4)*67;
+    const el=document.getElementById('fill'+i); el.setAttribute('y',81-h); el.setAttribute('height',h); }
+}
+function addW(n){ const L=day(); L.wq=Math.max(0,Math.min(12,(L.wq||0)+n)); save(); renderHoy(); }
+
+/* ---- narrativa dinámica de insulina ---- */
+function fastStory(min,total){
+  const h=min/60;
+  if(h<0.5) return {st:'Absorción activa',
+    n:'La glucosa de lo que acabas de comer está entrando al torrente. Tu páncreas ya soltó insulina y la <b>lipasa HSL está apagada</b>: el tejido adiposo está en modo guardar, no en modo soltar.',
+    tip:'Si te paras o caminas 10 minutos ahora, tus GLUT4 capturan parte de esa glucosa sin gastar insulina extra.'};
+  if(h<1.25) return {st:'Pico de insulina',
+    n:'Estás en el punto más alto de la curva. La insulina está metiendo glucosa al músculo y al hígado, y frenando por completo la salida de ácidos grasos del tejido adiposo.',
+    tip:'Este es el momento donde el orden de tu plato y el vinagre ya hicieron su trabajo — o no. Nada que corregir ahora, solo no volver a comer.'};
+  if(h<2.25) return {st:'Insulina bajando',
+    n:'La glucosa vuelve hacia su nivel basal y la insulina empieza a descender. El glucagón asoma. Todavía no hay lipólisis significativa, pero ya se está preparando el terreno.',
+    tip:'Aquí suele aparecer el falso hambre por la caída rápida de glucosa. Agua a traguitos y espera 20 minutos: casi siempre se va.'};
+  if(h<3.25) return {st:'Cerca de basal',
+    n:'La insulina está llegando a su piso. La <b>lipasa HSL empieza a reactivarse</b> y el tejido adiposo comienza a liberar ácidos grasos hacia la sangre para usarlos como combustible.',
+    tip:'Buen momento para caminar o hacer tus pesas: con insulina baja, el músculo tira preferentemente de grasa.'};
+  if(min<total) return {st:'Lipólisis activa',
+    n:'Estás en la mejor parte de la ventana. Insulina en basal, glucagón elevado, HSL trabajando a toda marcha rompiendo triglicéridos. Tu páncreas lleva rato sin secretar.',
+    tip:'Aguanta los últimos minutos limpios. Un solo bocado aquí reinicia todo el proceso desde cero.'};
+  const extra=min-total;
+  return {st:'Ventana cumplida ✓',
+    n:'Completaste tus '+(total/60)+' horas'+(extra>30?' y llevas '+Math.floor(extra/60)+'h '+Math.round(extra%60)+'m extra':'')+'. Insulina en basal, páncreas descansado y oxidación de grasa sostenida.',
+    tip:'Ahora sí: come tranquila, respetando fibra → proteína → carbohidrato y apuntando a 30 g de proteína.'};
+}
+function lastCaloric(){
+  const L=day(todayISO()); let best=null;
+  (L.meals||[]).forEach(m=>{ if(m.breaks!==0){ if(!best||m.t>best) best=m.t; } });
+  return best;
+}
+function renderFast(){
+  const t=lastCaloric(), H=S.set.fastH||4;
+  const c=document.getElementById('fastcard'), mini=document.getElementById('fastmini');
+  if(!t){ c.innerHTML=`<div class="st">Sin ingestas hoy</div><div class="row"><div style="flex:1"><div class="t">—</div>
+    <div class="s">Registra tu primera comida del día para arrancar el contador de ${H} h.</div></div></div>`;
+    mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">Sin ingestas registradas hoy</b></div>`; return; }
+  const now=new Date(), [hh,mm]=t.split(':').map(Number);
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm);
+  let el=(now-start)/60000; if(el<0)el=0;
+  const total=H*60, pct=Math.min(1,el/total), rem=Math.max(0,total-el);
+  const f=m=>Math.floor(m/60)+':'+String(Math.floor(m%60)).padStart(2,'0');
+  const end=new Date(start.getTime()+total*60000);
+  const endS=end.getHours()+':'+String(end.getMinutes()).padStart(2,'0');
+  const s=fastStory(el,total);
+  c.innerHTML=`<div class="st">${s.st}</div>
+   <div class="row">
+    <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+      <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8"/>
+      <circle cx="38" cy="38" r="31" fill="none" stroke="#F7D5DC" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="195" stroke-dashoffset="${195-195*pct}" transform="rotate(-90 38 38)"/>
+      <text x="38" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">${Math.round(pct*100)}%</text>
+    </svg>
+    <div style="flex:1"><div class="t">${f(el)}</div>
+      <div class="s">desde tu última ingesta calórica (${t})</div>
+      <div style="font-size:12px;font-weight:700;color:#F7D5DC;margin-top:8px">${pct>=1?'Puedes comer limpio':'Faltan '+f(rem)+' · a las '+endS}</div></div>
+   </div>
+   <div class="note">${s.n}</div><div class="tip">💡 ${s.tip}</div>`;
+  mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">${s.st} · ${f(el)}</b>
+    <div style="font-size:11px;opacity:.75;margin-top:2px">${pct>=1?'Ventana cumplida':'Próxima ingesta limpia a las '+endS}</div></div>`;
+}
+
+function nextWegovy(){ const wd=+S.set.wday; let d=new Date(); d.setHours(0,0,0,0);
+  for(let i=0;i<14;i++){ if(d.getDay()===wd && !S.wegovy.includes(iso(d))) return iso(d); d.setDate(d.getDate()+1); } return null; }
+function renderWegovy(){
+  const nx=nextWegovy(), n=S.wegovy.length, dd=nx?daysBetween(todayISO(),nx):0;
+  let dots=[...S.wegovy].slice(-3).map(x=>`<div style="flex:1;text-align:center"><div style="height:6px;border-radius:99px;background:var(--rose)"></div><div style="font-size:9px;color:#8a6470;margin-top:4px">${fmtShort(x)}</div></div>`).join('');
+  if(nx) dots+=`<div style="flex:1;text-align:center"><div style="height:6px;border-radius:99px;background:rgba(224,154,171,.28);border:1.5px dashed var(--rose)"></div><div style="font-size:9px;color:#8a6470;margin-top:4px;font-weight:700">${fmtShort(nx)}</div></div>`;
+  document.getElementById('wegovycard').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">💉</div>
+      <div style="flex:1"><b style="font-size:14px">Wegovy ${esc(S.set.wdose)}</b>
+        <div style="font-size:11.5px;color:#8a6470;margin-top:2px">${nx?(n+1)+'ª dosis · <b>'+fmtDate(nx)+'</b> · '+(dd===0?'hoy':'en '+dd+' día'+(dd>1?'s':'')):'—'}</div></div>
+    </div>
+    <div style="display:flex;gap:5px;margin-top:14px">${dots}</div>
+    <button class="addbtn" style="margin-top:14px;margin-bottom:0;border-color:#E3CBD4;color:#8a6470" onclick="markDose()">✓ Ya me inyecté</button>`;
+}
+function markDose(){ if(!nextWegovy())return; S.wegovy.push(todayISO()); S.wegovy.sort(); save(); renderWegovy(); toast('Dosis registrada 💉'); }
+
+function toggleHabit(h){
+  const L=day(); const on=!L.h[h.id]; L.h[h.id]=on;
+  if(on){ L.t[h.id]=nowHM();
+    if(h.breaks && VIEW===todayISO()) L.meals.push({id:Date.now(),t:L.t[h.id],name:h.n,ic:h.ic,kc:0,p:0,c:0,f:0,breaks:1,auto:h.id});
+  } else { delete L.t[h.id]; L.meals=(L.meals||[]).filter(m=>m.auto!==h.id); }
+  save(); renderAll();
+}
+function setHabitTime(id,v){
+  const L=day(); L.t[id]=v;
+  (L.meals||[]).forEach(m=>{ if(m.auto===id) m.t=v; });
+  save(); renderAll(); toast('Hora actualizada a las '+v);
+}
+
+/* ============ CICLO (render) ============ */
+function renderCiclo(){
+  const n=cycleDay(), ph=phaseOf(n), P=predictions();
+  document.getElementById('c-title').textContent=ph.t;
+  document.getElementById('cychero').innerHTML=`
+    <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.7">Día del ciclo</div>
+    <div class="day">${n}</div><div class="ph">${ph.name} ${ph.emo}</div>
+    <div class="sub">${ph.s}</div>
+    <div class="phases">${[0,1,2,3].map(i=>`<div class="${i===ph.i?'on':''}"></div>`).join('')}</div>
+    <div class="phase-lbl"><span>Menstrual</span><span>Folicular</span><span>Ovulatoria</span><span>Lútea</span></div>`;
+
+  document.getElementById('predict').innerHTML=`
+    <div class="pr"><div class="e">${P.inFertile?'🌷':'🌱'}</div><b>${P.inFertile?'Estás en ventana fértil':(P.dOvu>0?'En '+P.dOvu+' días':'Ya pasó')}</b>
+      <span>Ventana fértil<br>${fmtShort(P.fStart)} – ${fmtShort(P.fEnd)}<br>ovulación ≈ ${fmtShort(P.ovu)}</span></div>
+    <div class="pr"><div class="e">🩸</div><b>${P.dNext>0?'En '+P.dNext+' días':(P.dNext===0?'Hoy':'Con '+(-P.dNext)+' de retraso')}</b>
+      <span>Próximo sangrado<br>${fmtShort(P.nextP)}<br>ciclo de ${P.len} días</span></div>`;
+
+  const L=P.len, B=S.set.bleed||5;
+  const pctOf=d=>Math.max(0,Math.min(100,(d/L)*100));
+  const fS=daysBetween(P.start,P.fStart), fE=daysBetween(P.start,P.fEnd)+1, ovD=L-14;
+  document.getElementById('track').innerHTML=`
+    <i style="left:0;width:${pctOf(B)}%;background:#C4718A"></i>
+    <i style="left:${pctOf(B)}%;width:${pctOf(fS-B)}%;background:#F2C2C9"></i>
+    <i style="left:${pctOf(fS)}%;width:${pctOf(fE-fS)}%;background:#C9A2BC"></i>
+    <i style="left:${pctOf(fE)}%;width:${pctOf(L-fE)}%;background:#EFB4A4"></i>
+    <div class="now" style="left:${pctOf(n-1)}%"></div>`;
+  document.getElementById('predict-note').innerHTML=
+    `Calculado con tu duración ${S.cycles.length>1?'promedio real de <b>'+L+' días</b> ('+(S.cycles.length-1)+' ciclo'+(S.cycles.length>2?'s':'')+' registrado'+(S.cycles.length>2?'s':'')+')':'estimada de <b>'+L+' días</b>'}, asumiendo fase lútea de 14 días. Es una estimación estadística, no una detección de ovulación: no la uses como método anticonceptivo. Entre más ciclos registres, más se ajusta.`;
+
+  document.getElementById('seedbox').innerHTML=seedsOf(n).map(s=>`<div class="seed"><div class="e">${s[0]}</div><b>${s[1]}</b><span>${s[2]}</span></div>`).join('');
+  const tips={0:'🛌 <b>Baja la exigencia.</b> Retienes de 1 a 2.5 L de agua extracelular: no te midas hoy.<br><br>💊 <b>Magnesio y piernas a 90°</b> son tus mejores aliados esta semana.<br><br>🥩 <b>Sostén la proteína</b> aunque baje el apetito.',
+    1:'🌱 <b>Energía en ascenso.</b> Buen momento para retomar rutinas y probar hábitos nuevos.<br><br>🥦 <b>Crucíferas</b> para ayudar al hígado con los estrógenos que van subiendo.<br><br>🎃 <b>Calabaza + linaza</b> por el zinc que apoya la FSH.',
+    2:'🏋️‍♀️ <b>Entrena pesas fuerte.</b> Tolerancia al esfuerzo y fuerza en su pico máximo.<br><br>🥗 <b>Prioriza fibra</b> para evacuar los metabolitos de estrógeno.<br><br>🛡️ <b>Cuida la insulina.</b> El repunte de testosterona del día 13–16 no debe sobreestimular la CYP17A1.',
+    3:'🔥 <b>Tu TMB sube 100–300 kcal.</b> La progesterona es termogénica.<br><br>🧂 <b>Cuida el sodio</b> y la retención previa al sangrado.<br><br>😴 <b>Sueño primero.</b> Si duermes mal, el cortisol dispara los antojos.'};
+  document.getElementById('phasetips').innerHTML=`<div style="font-size:12.5px;line-height:1.7">${tips[ph.i]}</div>`;
+
+  document.getElementById('cyclelog').innerHTML=[...S.cycles].reverse().map((c,i,arr)=>{
+    const nx=arr[i-1]; const len=nx?daysBetween(c,nx):daysBetween(c,todayISO());
+    return `<div class="meal"><div class="e">🩸</div><div class="t"><b>${fmtDate(c)}</b><span>${nx?'duró '+len+' días':'en curso · día '+(len+1)}</span></div></div>`;
+  }).join('')||'<div class="card" style="font-size:12.5px;color:var(--muted)">Aún no hay ciclos registrados.</div>';
+}
+function startPeriod(){
+  if(cycleStart()===todayISO()){toast('Ya estaba registrado');return;}
+  S.cycles.push(todayISO()); save(); renderAll(); toast('Ciclo reiniciado a día 1 🩸');
+}
+
+/* ============ PROGRESO ============ */
+function renderProg(){
+  const heat=document.getElementById('heat'); heat.innerHTML='';
+  const ringH=S.habits.filter(h=>h.ring!==0).length||1;
+  let sum=0,cnt=0;
+  for(let i=27;i>=0;i--){
+    const k=addDays(todayISO(),-i), d=S.log[k];
+    const done=d?Object.values(d.h||{}).filter(Boolean).length:0;
+    const r=Math.min(1,done/ringH); if(d){sum+=r;cnt++;}
+    const cols=['#F4E7EA','#F7D8DF','#EFB9C7','#E09AAB','#C4718A'];
+    const c=done===0?cols[0]:cols[Math.min(4,Math.ceil(r*4))];
+    const el=document.createElement('div'); el.className='hc';
+    el.style.background=c; el.style.color=r>.5?'#fff':'#C9B4BA';
+    el.textContent=parseISO(k).getDate();
+    el.onclick=()=>{VIEW=k;go('hoy');};
+    heat.appendChild(el);
+  }
+  document.getElementById('adh-pct').textContent=cnt?Math.round(sum/cnt*100)+'%':'—';
+
+  document.getElementById('streaks').innerHTML=S.habits.map(h=>{
+    const st=streak(h.id);
+    return `<div class="meal"><div class="e">${h.ic}</div><div class="t"><b>${esc(h.n)}</b><span>${st?'racha activa':'sin racha'}</span></div>
+      <div class="n"><b>${st>0?'🔥 '+st:'—'}</b>días</div></div>`;
+  }).join('');
+
+  const wc=document.getElementById('waterchart'); wc.innerHTML=''; let wsum=0,wn=0;
+  for(let i=13;i>=0;i--){ const k=addDays(todayISO(),-i), q=(S.log[k]&&S.log[k].wq)||0;
+    if(S.log[k]){wsum+=q;wn++;}
+    const b=document.createElement('i'); b.style.height=Math.max(3,(q/12)*100)+'%';
+    b.style.background=q>=S.set.waterQ?'var(--mauve)':'#E5D5E0'; wc.appendChild(b); }
+  document.getElementById('water-avg').textContent=wn?('Promedio: '+trim(wsum/wn/4)+' Stanleys ('+((wsum/wn/4)*1.18).toFixed(2)+' L) al día'):'Sin datos aún';
+
+  const ib=[...S.inbody].sort((a,b)=>a.date<b.date?-1:1);
+  const last=ib[ib.length-1], prev=ib[ib.length-2];
+  const dl=(a,b,inv)=>{ if(b==null||a==null)return '<span class="flat">—</span>'; const d=a-b;
+    const cls=(inv?d<0:d>0)?'down':(d===0?'flat':'up');
+    return `<span class="${d===0?'flat':cls}">${d>0?'+':''}${(Math.round(d*10)/10)}</span>`; };
+  document.getElementById('inbody-latest').innerHTML=last?`
+    <div class="card t-blush" style="display:flex;align-items:center;gap:14px">
+      <div><div style="font-size:11px;color:#8a5a68;letter-spacing:.5px">INBODY SCORE</div>
+      <div style="font-size:38px;font-weight:800;letter-spacing:-1.5px;line-height:1.1">${last.score||'—'}<small style="font-size:14px;color:#8a5a68">/100</small></div></div>
+      <div style="flex:1;font-size:11.5px;color:#7d515e;line-height:1.55">${fmtDate(last.date)}${last.cd?' · día '+last.cd+' del ciclo':''}</div>
+    </div>
+    <div class="metrics" style="margin-bottom:12px">
+      <div class="m"><div class="l">PESO</div><div class="v">${last.w} <small>kg</small></div><div class="d">${dl(last.w,prev&&prev.w,1)} kg</div></div>
+      <div class="m"><div class="l">MÚSCULO SMM</div><div class="v">${last.smm} <small>kg</small></div><div class="d">${dl(last.smm,prev&&prev.smm)} kg</div></div>
+      <div class="m"><div class="l">% GRASA</div><div class="v">${last.pbf} <small>%</small></div><div class="d">${dl(last.pbf,prev&&prev.pbf,1)} pts</div></div>
+      <div class="m"><div class="l">MASA GRASA</div><div class="v">${last.fat} <small>kg</small></div><div class="d">${dl(last.fat,prev&&prev.fat,1)} kg</div></div>
+      <div class="m"><div class="l">VISCERAL</div><div class="v">Nivel ${last.vis}</div><div class="d">${dl(last.vis,prev&&prev.vis,1)}</div></div>
+      <div class="m"><div class="l">IMC</div><div class="v">${last.bmi}</div><div class="d">${dl(last.bmi,prev&&prev.bmi,1)}</div></div>
+    </div>`:'<div class="card" style="font-size:12.5px;color:var(--muted)">Aún no hay mediciones.</div>';
+
+  const sv=document.getElementById('inbody-chart');
+  if(ib.length){
+    const vals=ib.map(x=>+x.pbf).filter(v=>!isNaN(v));
+    const mn=Math.min(...vals)-1.5, mx=Math.max(...vals)+1.5;
+    const X=i=>ib.length>1?30+(i/(ib.length-1))*240:150;
+    const Y=v=>95-((v-mn)/(mx-mn||1))*70;
+    sv.innerHTML=`<line x1="0" y1="25" x2="300" y2="25" stroke="#F4E7EA"/><line x1="0" y1="60" x2="300" y2="60" stroke="#F4E7EA"/><line x1="0" y1="95" x2="300" y2="95" stroke="#F4E7EA"/>
+      ${ib.length>1?`<polyline points="${ib.map((x,i)=>X(i)+','+Y(+x.pbf)).join(' ')}" fill="none" stroke="#C4718A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+      ${ib.map((x,i)=>`<circle cx="${X(i)}" cy="${Y(+x.pbf)}" r="5" fill="#C4718A"/>
+        <text x="${X(i)}" y="${Y(+x.pbf)-11}" font-size="10" font-weight="700" text-anchor="middle" fill="#3B2A30">${x.pbf}%</text>
+        <text x="${X(i)}" y="114" font-size="9" text-anchor="middle" fill="#A38F96">${fmtShort(x.date)}</text>`).join('')}`;
+  }
+  document.getElementById('inbody-list').innerHTML=[...ib].reverse().slice(0,8).map(x=>
+    `<div class="meal"><div class="e">📊</div><div class="t"><b>${fmtDate(x.date)}</b><span>${x.w} kg · SMM ${x.smm} · ${x.pbf}%</span></div>
+     <div class="n"><b>${x.score||'—'}</b>score</div><div class="xdel" onclick="delInbody('${x.date}')">✕</div></div>`).join('');
+
+  const tmb=last&&last.tmb?last.tmb:1390;
+  document.getElementById('balance').innerHTML=
+    row('TMB (reposo)',tmb.toLocaleString('es-MX')+' kcal')+
+    row('TDEE estimado',Math.round(tmb*1.25).toLocaleString('es-MX')+' – '+Math.round(tmb*1.33).toLocaleString('es-MX')+' kcal')+
+    row('Ingesta objetivo',(S.set.kcal-50).toLocaleString('es-MX')+' – '+(S.set.kcal+50).toLocaleString('es-MX')+' kcal')+
+    row('Proteína mínima',S.set.prot+' g')+
+    row('Déficit limpio','300 – 400 kcal','var(--rose-d)');
+}
+function row(a,b,c){return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:var(--muted)">${a}</span><b style="color:${c||'inherit'}">${b}</b></div>`;}
+function delInbody(d){ if(!confirm('¿Eliminar la medición del '+fmtDate(d)+'?'))return; S.inbody=S.inbody.filter(x=>x.date!==d); save(); renderAll(); }
+
+/* ============ COMIDAS ============ */
+function renderCom(){
+  document.getElementById('m-date').textContent=fmtDate(VIEW);
+  const L=day(VIEW), ms=(L.meals||[]).slice().sort((a,b)=>a.t<b.t?-1:1);
+  const P=ms.reduce((a,m)=>a+(+m.p||0),0), K=ms.reduce((a,m)=>a+(+m.kc||0),0);
+  document.getElementById('m-prot').innerHTML=`<b>${Math.round(P)}</b> <span style="color:var(--muted)">/ ${S.set.prot} g</span>`;
+  document.getElementById('m-kcal').innerHTML=`<b>${Math.round(K)}</b> <span style="color:var(--muted)">/ ${S.set.kcal.toLocaleString('es-MX')} kcal</span>`;
+  document.getElementById('bar-prot').style.width=Math.min(100,P/S.set.prot*100)+'%';
+  document.getElementById('bar-kcal').style.width=Math.min(100,K/S.set.kcal*100)+'%';
+  document.getElementById('meallist').innerHTML=ms.map(m=>`
+    <div class="meal" onclick="editMeal(${m.id})"><div class="e">${m.photo?`<img src="${m.photo}">`:(m.ic||'🍽️')}</div>
+    <div class="t"><b>${esc(m.name)}</b><span>${m.t}${m.seq?' · secuencia ✓':''}${m.breaks===0?' · no rompe ventana':''}</span></div>
+    <div class="n"><b>${Math.round(m.kc||0)}</b>kcal · ${Math.round(m.p||0)}g P</div>
+    <div class="xdel" onclick="event.stopPropagation();delMealById(${m.id})">✕</div></div>`).join('')
+    ||'<div class="card" style="font-size:12.5px;color:var(--muted)">Sin comidas registradas este día.</div>';
+
+  const sc=document.getElementById('stepchart'); sc.innerHTML='';
+  for(let i=6;i>=0;i--){ const k=addDays(todayISO(),-i), v=(S.log[k]&&S.log[k].steps)||0;
+    const b=document.createElement('i'); b.style.height=Math.max(3,Math.min(100,v/(S.set.steps*1.4)*100))+'%';
+    b.style.background=v>=S.set.steps?'var(--rose)':'#F2D6DD'; sc.appendChild(b); }
+  document.getElementById('steps-today').textContent=(L.steps||0).toLocaleString('es-MX');
+  document.getElementById('steps-goal').textContent='meta '+S.set.steps.toLocaleString('es-MX');
+}
+function askSteps(){ const v=prompt('¿Cuántos pasos llevas hoy?',day(VIEW).steps||''); if(v===null)return;
+  day(VIEW).steps=parseInt(String(v).replace(/\D/g,''))||0; save(); renderAll(); }
+
+/* ============ APRENDE ============ */
+function unlockedIds(){
+  const set=new Set(LIB.filter(a=>a.open).map(a=>a.id));
+  let grew=true;
+  while(grew){ grew=false;
+    LIB.forEach(a=>{ if(set.has(a.id)&&S.read.includes(a.id)&&a.unlocks) a.unlocks.forEach(u=>{ if(!set.has(u)){set.add(u);grew=true;} }); });
+  }
+  return set;
+}
+function renderLearn(){
+  const un=unlockedIds();
+  const list=LIB.filter(a=>un.has(a.id));
+  document.getElementById('apr-count').textContent=list.length+' de '+LIB.length+' informes desbloqueados';
+  document.getElementById('learn').innerHTML=list.map(a=>{
+    const read=S.read.includes(a.id);
+    return `<div class="lrn ${read?'':'unread'}" onclick="openArticle('${a.id}')">
+      ${read?'':'<div class="nw">NUEVO</div>'}
+      <div class="tagl">${a.tag}</div><b>${a.t}</b><p>${esc(a.b[0]).slice(0,110)}…</p></div>`;
+  }).join('');
+}
+function openArticle(id){
+  const a=LIB.find(x=>x.id===id); if(!a)return;
+  const before=unlockedIds().size;
+  document.getElementById('a-tag').innerHTML=`<div class="tagl">${a.tag}</div>`;
+  document.getElementById('a-t').textContent=a.t;
+  document.getElementById('a-body').innerHTML=a.b.map(p=>`<p class="body">${p}</p>`).join('');
+  if(!S.read.includes(id)) S.read.push(id);
+  save();
+  const after=unlockedIds(); const nuevos=(a.unlocks||[]).filter(u=>after.has(u));
+  document.getElementById('a-unlocked').innerHTML=nuevos.length?
+    `<div class="card t-blush" style="margin-top:8px"><b style="font-size:13px">📖 Desbloqueaste ${nuevos.length} informe${nuevos.length>1?'s':''}</b>
+     <div style="font-size:12px;color:#7d515e;line-height:1.6;margin-top:6px">${nuevos.map(u=>'· '+LIB.find(x=>x.id===u).t).join('<br>')}</div></div>`:'';
+  openSheet('sheet-a');
+  if(after.size>before) setTimeout(()=>toast('Se agregaron '+(after.size-before)+' informes nuevos 📖'),700);
+  renderLearn();
+}
+
+/* ============ SHEETS ============ */
+document.querySelectorAll('.grab').forEach(g=>g.onclick=()=>closeSheets());
+function openSheet(id){ closeSheets(); document.getElementById('sbg').classList.add('open');
+  const s=document.getElementById(id); s.scrollTop=0; s.classList.add('open');
+  if(id==='sheet-set') fillSettings();
+  if(id==='sheet-inbody' && !document.getElementById('ib-date').value){ document.getElementById('ib-date').value=todayISO(); document.getElementById('ib-cd').value=cycleDay(); } }
+function closeSheets(){ document.getElementById('sbg').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open')); }
+
+function openHabit(h){
+  const L=day(VIEW);
+  document.getElementById('sh-t').textContent=h.n;
+  document.getElementById('sh-k').textContent=(h.k||h.metric||'')+(h.dose?' · '+h.dose:'');
+  const st=streak(h.id), tot=Object.keys(S.log).filter(k=>S.log[k].h&&S.log[k].h[h.id]).length;
+  document.getElementById('sh-streak').innerHTML=`<div style="display:flex;gap:9px">
+    <div class="card t-peach" style="flex:1;margin:0;text-align:center"><div style="font-size:22px;font-weight:800">🔥 ${st}</div><div style="font-size:10.5px;color:#96604f">días seguidos</div></div>
+    <div class="card t-blush" style="flex:1;margin:0;text-align:center"><div style="font-size:22px;font-weight:800">${tot}</div><div style="font-size:10.5px;color:#8a5a68">veces en total</div></div></div>`;
+  document.getElementById('sh-time-box').innerHTML=L.h[h.id]?
+    `<h4>Hora en que lo hiciste</h4>
+     <input class="f-in" type="time" value="${L.t[h.id]||nowHM()}" onchange="setHabitTime('${h.id}',this.value)">
+     <div class="f-hint">${h.breaks?'Esta hora alimenta el timer de descanso pancreático. Corrígela si lo palomeaste tarde.':'Corrígela si lo palomeaste después de haberlo hecho.'}</div>`:'';
+  document.getElementById('sh-rem').innerHTML=`
+    <div class="row-tog"><div><div class="rt">Notificación</div><div class="rs">${h.time||'sin hora'}${h.anchor?' · '+h.anchor:''}</div></div>
+      <div class="tog ${h.remind?'on':''}" onclick="tog('${h.id}','remind',this)"><i></i></div></div>
+    <div class="row-tog" style="border:0"><div><div class="rt">Insistir hasta marcarlo</div><div class="rs">Repite cada 15 min, máx. 3 veces</div></div>
+      <div class="tog ${h.nag?'on':''}" onclick="tog('${h.id}','nag',this)"><i></i></div></div>`;
+  document.getElementById('sh-why').innerHTML=(h.why||[]).map(w=>`<li>${esc(w)}</li>`).join('')||'<li style="color:var(--muted)">Sin ficha todavía — edítalo para agregarla.</li>';
+  document.getElementById('sh-when').innerHTML=(h.when||[]).map(w=>`<div class="tl"><div class="w">${esc(w[0])}</div><div class="c">${esc(w[1])}</div></div>`).join('')||'<div style="font-size:12.5px;color:var(--muted)">Sin línea de tiempo todavía.</div>';
+  document.getElementById('sh-edit').onclick=()=>newHabit(null,h.id);
+  openSheet('sheet-h');
+}
+function tog(id,k,el){ const h=S.habits.find(x=>x.id===id); h[k]=h[k]?0:1; el.classList.toggle('on'); save(); renderHoy(); }
+
+const ICONS=['🌾','☕','🌻','🧪','🥩','🥦','⌚','🚶‍♀️','🏋️‍♀️','💊','🦵','🍵','🧘‍♀️','😴','🧴','🥑','🍋','🧂'];
+const GK=[['manana','Mañana'],['comidas','Comidas'],['mov','Movimiento'],['noche','Noche']];
+const FK=[['daily','Diario'],['week','X veces/semana'],['cycle','Según fase del ciclo']];
+const AK=['','Al despertar','Antes de comer','Después de comer','Antes de dormir','Día de inyección'];
+const MK=['Insulina / glucosa','Cortisol / sueño','Andrógenos / piel','Músculo','Retención de líquidos','Digestión'];
+let EDIT=null;
+function chips(el,arr,val){ el.innerHTML=''; arr.forEach(a=>{ const v=Array.isArray(a)?a[0]:a, t=Array.isArray(a)?a[1]:a;
+  const d=document.createElement('div'); d.className='chip'+(v===val?' on':''); d.textContent=t||'(ninguno)'; d.dataset.v=v;
+  d.onclick=()=>{[...el.children].forEach(x=>x.classList.remove('on'));d.classList.add('on');}; el.appendChild(d); }); }
+function chipVal(el){ const on=el.querySelector('.chip.on'); return on?on.dataset.v:''; }
+
+function newHabit(g,id){
+  EDIT=id?S.habits.find(h=>h.id===id):null;
+  const h=EDIT||{ic:'🍵',g:g||'manana',freq:'daily',time:'08:00',remind:1,nag:1,ring:1,breaks:0,metric:MK[0]};
+  document.getElementById('n-title').textContent=EDIT?'Editar hábito':'Nuevo hábito';
+  document.getElementById('n-name').value=EDIT?h.n:'';
+  document.getElementById('n-dose').value=h.dose||'';
+  document.getElementById('n-time').value=h.time||'08:00';
+  document.getElementById('n-per').value=h.per||'';
+  chips(document.getElementById('n-ic'),ICONS,h.ic);
+  chips(document.getElementById('n-g'),GK,h.g);
+  chips(document.getElementById('n-freq'),FK,h.freq);
+  chips(document.getElementById('n-anchor'),AK,h.anchor||'');
+  chips(document.getElementById('n-metric'),MK,h.metric||MK[0]);
+  ['remind','nag','ring','breaks'].forEach(k=>document.getElementById('n-'+k).classList.toggle('on',!!h[k]));
+  document.getElementById('n-why').value=(h.why||[]).join('\n');
+  document.getElementById('n-when').value=(h.when||[]).map(w=>w[0]+': '+w[1]).join('\n');
+  document.getElementById('n-del').style.display=EDIT?'block':'none';
+  openSheet('sheet-n');
+}
+function saveHabit(){
+  const n=document.getElementById('n-name').value.trim(); if(!n){toast('Ponle nombre');return;}
+  const whyT=document.getElementById('n-why').value.trim(), whenT=document.getElementById('n-when').value.trim();
+  const g=chipVal(document.getElementById('n-g'));
+  const obj={ id:EDIT?EDIT.id:'h'+Date.now(), n, ic:chipVal(document.getElementById('n-ic'))||'🍵',
+    bg:EDIT?EDIT.bg:({manana:'blush',comidas:'rose',mov:'mauve',noche:'wine'}[g]||'rose'),
+    dose:document.getElementById('n-dose').value.trim(), g,
+    freq:chipVal(document.getElementById('n-freq')), per:+document.getElementById('n-per').value||3,
+    time:document.getElementById('n-time').value, anchor:chipVal(document.getElementById('n-anchor')),
+    metric:chipVal(document.getElementById('n-metric')),
+    remind:document.getElementById('n-remind').classList.contains('on')?1:0,
+    nag:document.getElementById('n-nag').classList.contains('on')?1:0,
+    ring:document.getElementById('n-ring').classList.contains('on')?1:0,
+    breaks:document.getElementById('n-breaks').classList.contains('on')?1:0,
+    why:whyT?whyT.split('\n').filter(Boolean):(EDIT?EDIT.why:[]),
+    when:whenT?whenT.split('\n').filter(Boolean).map(l=>{const i=l.indexOf(':');return i>0?[l.slice(0,i).trim(),l.slice(i+1).trim()]:[l,''];}):(EDIT?EDIT.when:[]),
+    k:EDIT?EDIT.k:'' };
+  if(EDIT){ const i=S.habits.findIndex(h=>h.id===EDIT.id); S.habits[i]=Object.assign({},EDIT,obj); } else S.habits.push(obj);
+  save(); closeSheets(); renderAll(); toast(EDIT?'Hábito actualizado':'Hábito agregado ✓');
+}
+function deleteHabit(){ if(!EDIT)return; if(!confirm('¿Eliminar "'+EDIT.n+'"? Se conserva tu historial.'))return;
+  S.habits=S.habits.filter(h=>h.id!==EDIT.id); save(); closeSheets(); renderAll(); toast('Hábito eliminado'); }
+
+/* --- comidas --- */
+let MEDIT=null, MPHOTO=null;
+function newMeal(){ MEDIT=null; MPHOTO=null;
+  document.getElementById('m-photo').innerHTML='📷';
+  ['m-name','m-desc','m-kc','m-p','m-c','m-f'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('m-ic').value='🍽️';
+  document.getElementById('m-time').value=nowHM();
+  chips(document.getElementById('m-seq'),[['1','✓ Fibra → proteína → carbo'],['0','Sin orden']],'1');
+  document.getElementById('m-breaks').classList.add('on');
+  document.getElementById('m-del').style.display='none';
+  openSheet('sheet-m');
+}
+function editMeal(id){ const m=day(VIEW).meals.find(x=>x.id===id); if(!m)return; MEDIT=m; MPHOTO=m.photo||null;
+  document.getElementById('m-photo').innerHTML=m.photo?`<img src="${m.photo}">`:'📷';
+  document.getElementById('m-name').value=m.name||''; document.getElementById('m-desc').value=m.desc||'';
+  document.getElementById('m-kc').value=m.kc||''; document.getElementById('m-p').value=m.p||'';
+  document.getElementById('m-c').value=m.c||''; document.getElementById('m-f').value=m.f||'';
+  document.getElementById('m-ic').value=m.ic||'🍽️'; document.getElementById('m-time').value=m.t||'';
+  chips(document.getElementById('m-seq'),[['1','✓ Fibra → proteína → carbo'],['0','Sin orden']],m.seq?'1':'0');
+  document.getElementById('m-breaks').classList.toggle('on',m.breaks!==0);
+  document.getElementById('m-del').style.display='block';
+  openSheet('sheet-m');
+}
+document.getElementById('m-file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=ev=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas');
+    const sc=340/Math.max(img.width,img.height); c.width=img.width*sc; c.height=img.height*sc;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    MPHOTO=c.toDataURL('image/jpeg',0.5);
+    document.getElementById('m-photo').innerHTML=`<img src="${MPHOTO}">`; }; img.src=ev.target.result; };
+  r.readAsDataURL(f);
+});
+function copyAIPrompt(){
+  const d=document.getElementById('m-desc').value.trim()||document.getElementById('m-name').value.trim();
+  const n=cycleDay(), ph=phaseOf(n);
+  const t=`Estoy en tratamiento con Wegovy ${S.set.wdose}, día ${n} de mi ciclo (${ph.name}). Meta diaria: ${S.set.kcal} kcal y mínimo ${S.set.prot} g de proteína.\n\nEsto es lo que comí (te adjunto la foto): ${d}\n\nDame SOLO estos cuatro números estimados, en este formato exacto:\nkcal:\nproteína (g):\ncarbos (g):\ngrasa (g):\n\nY después, en dos renglones, el impacto en mi curva de insulina.`;
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('Copiado ✓ pégalo en tu Gem'),()=>fallbackCopy(t)); else fallbackCopy(t);
+}
+function fallbackCopy(t){ const a=document.createElement('textarea'); a.value=t; document.body.appendChild(a); a.select();
+  try{document.execCommand('copy');toast('Copiado ✓');}catch(e){prompt('Copia esto:',t);} a.remove(); }
+function saveMeal(){
+  const L=day(VIEW);
+  const m={ id:MEDIT?MEDIT.id:Date.now(), name:document.getElementById('m-name').value.trim()||'Comida',
+    desc:document.getElementById('m-desc').value.trim(),
+    kc:+document.getElementById('m-kc').value||0, p:+document.getElementById('m-p').value||0,
+    c:+document.getElementById('m-c').value||0, f:+document.getElementById('m-f').value||0,
+    t:document.getElementById('m-time').value||'12:00', ic:document.getElementById('m-ic').value||'🍽️',
+    seq:chipVal(document.getElementById('m-seq'))==='1'?1:0,
+    breaks:document.getElementById('m-breaks').classList.contains('on')?1:0, photo:MPHOTO,
+    auto:MEDIT?MEDIT.auto:undefined };
+  if(MEDIT){ const i=L.meals.findIndex(x=>x.id===MEDIT.id); L.meals[i]=m; } else L.meals.push(m);
+  save(); closeSheets(); renderAll(); toast('Comida guardada ✓');
+}
+function deleteMeal(){ if(!MEDIT)return; const L=day(VIEW); L.meals=L.meals.filter(x=>x.id!==MEDIT.id);
+  save(); closeSheets(); renderAll(); toast('Eliminada'); }
+function delMealById(id){ const L=day(VIEW); L.meals=(L.meals||[]).filter(x=>x.id!==id); save(); renderAll(); toast('Eliminada'); }
+
+/* --- inbody manual + import --- */
+function saveInbody(){
+  const g=i=>document.getElementById(i).value;
+  if(!g('ib-date')){toast('Falta la fecha');return;}
+  addInbody({date:g('ib-date'),w:+g('ib-w')||null,smm:+g('ib-smm')||null,pbf:+g('ib-pbf')||null,fat:+g('ib-fat')||null,
+    vis:+g('ib-vis')||null,bmi:+g('ib-bmi')||null,tmb:+g('ib-tmb')||null,score:+g('ib-score')||null,cd:+g('ib-cd')||null});
+  closeSheets(); toast('Medición guardada 📊');
+  ['ib-w','ib-smm','ib-pbf','ib-fat','ib-vis','ib-bmi','ib-tmb','ib-score'].forEach(i=>document.getElementById(i).value='');
+}
+function addInbody(e){ S.inbody=S.inbody.filter(x=>x.date!==e.date); S.inbody.push(e);
+  S.inbody.sort((a,b)=>a.date<b.date?-1:1); save(); renderAll(); }
+
+const IBMAP=[
+ ['w',/^(peso|weight)|body\s*weight/i],
+ ['smm',/skeletal\s*muscle|masa\s*muscular\s*esquel|^smm$/i],
+ ['pbf',/percent\s*body\s*fat|porcentaje.*grasa|^pbf$|%\s*grasa|grasa\s*corporal\s*\(%\)/i],
+ ['fat',/body\s*fat\s*mass|masa\s*(de\s*)?grasa|^bfm$/i],
+ ['vis',/visceral/i],
+ ['bmi',/^bmi$|^imc$|masa\s*corporal.*ndice|índice.*masa/i],
+ ['tmb',/^bmr$|basal.*metab|metabolismo\s*basal|^tmb$|tasa\s*metab/i],
+ ['score',/inbody\s*score|puntuaci|^score$/i]
+];
+function parseNum(v){ if(v==null)return null; const s=String(v).replace(/[^0-9.,\-]/g,'').replace(',','.'); const n=parseFloat(s); return isNaN(n)?null:n; }
+function parseDateCell(v){
+  if(v==null)return null; const s=String(v).trim();
+  let m=s.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/); if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  m=s.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/); if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  m=s.match(/^(\d{4})(\d{2})(\d{2})$/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+  return null;
+}
+function ingestRows(rows){
+  if(!rows.length){toast('No pude leer el archivo');return;}
+  const head=rows[0].map(x=>String(x||'').trim());
+  const idx={}; IBMAP.forEach(([k,re])=>{ const i=head.findIndex(h=>re.test(h)); if(i>=0) idx[k]=i; });
+  const di=head.findIndex(h=>/test\s*date|fecha|^date$|datetime|medici/i.test(h));
+  let added=0;
+  rows.slice(1).forEach(r=>{
+    if(!r||!r.length)return;
+    const d=di>=0?parseDateCell(r[di]):null;
+    const e={date:d||todayISO()};
+    let any=false;
+    Object.keys(idx).forEach(k=>{ const v=parseNum(r[idx[k]]); if(v!=null){e[k]=v;any=true;} });
+    if(!any)return;
+    if(e.pbf==null && e.fat!=null && e.w) e.pbf=Math.round(e.fat/e.w*1000)/10;
+    if(e.fat==null && e.pbf!=null && e.w) e.fat=Math.round(e.w*e.pbf/100*10)/10;
+    e.cd=cycleDay(e.date); addInbody(e); added++;
+  });
+  if(added){ go('prog'); toast(added+' medición'+(added>1?'es':'')+' importada'+(added>1?'s':'')+' 📊'); }
+  else toast('No reconocí las columnas — captúralo a mano');
+}
+function splitCSV(text){
+  const delim=(text.split('\n')[0].match(/\t/g)||[]).length > (text.split('\n')[0].match(/,/g)||[]).length ? '\t' : ',';
+  return text.split(/\r?\n/).filter(l=>l.trim()).map(line=>{
+    const out=[]; let cur='',q=false;
+    for(let i=0;i<line.length;i++){ const c=line[i];
+      if(c==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+      else if(c===delim&&!q){ out.push(cur); cur=''; }
+      else cur+=c; }
+    out.push(cur); return out;
+  });
+}
+document.getElementById('ib-file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const name=f.name.toLowerCase();
+  if(/\.(xlsx|xls)$/.test(name)){
+    toast('Leyendo Excel…');
+    loadXLSX().then(()=>{ const r=new FileReader();
+      r.onload=ev=>{ try{ const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        ingestRows(XLSX.utils.sheet_to_json(ws,{header:1,raw:false}));
+      }catch(err){ toast('No pude leer el Excel'); } };
+      r.readAsArrayBuffer(f); })
+    .catch(()=>toast('Necesito internet para leer Excel. Exporta como CSV.'));
+  } else {
+    const r=new FileReader();
+    r.onload=ev=>ingestRows(splitCSV(ev.target.result));
+    r.readAsText(f,'utf-8');
+  }
+  e.target.value='';
+});
+function loadXLSX(){ return new Promise((res,rej)=>{ if(window.XLSX)return res();
+  const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+
+/* --- sincronización con Salud (vía Atajo) --- */
+function syncNow(silent){
+  fetch('health.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+    let n=0;
+    Object.keys(d||{}).forEach(k=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return;
+      const L=day(k);
+      if(d[k].steps!=null){ L.steps=+d[k].steps; n++; }
+      if(d[k].stand!=null){ L.stand=+d[k].stand; if(L.stand>=8) L.h['stand']=true; n++; }
+    });
+    if(S.set.synccyc && d.lastPeriod && /^\d{4}-\d{2}-\d{2}$/.test(d.lastPeriod)){
+      if(!S.cycles.includes(d.lastPeriod)){ S.cycles.push(d.lastPeriod); S.cycles.sort(); n++; }
+    }
+    S.set.lastSync=new Date().toISOString();
+    save(); renderAll();
+    if(!silent) toast(n?'Sincronizado ✓ '+n+' dato'+(n>1?'s':''):'Sin datos nuevos de Salud');
+  }).catch(()=>{ if(!silent) toast('No encontré datos. Falta configurar el Atajo.'); });
+}
+
+/* --- ajustes --- */
+function fillSettings(){
+  document.getElementById('s-cycle').value=cycleStart();
+  document.getElementById('s-clen').value=S.set.clen; document.getElementById('s-bleed').value=S.set.bleed;
+  document.getElementById('s-prot').value=S.set.prot; document.getElementById('s-kcal').value=S.set.kcal;
+  document.getElementById('s-steps').value=S.set.steps; document.getElementById('s-water').value=S.set.waterQ/4;
+  document.getElementById('s-fast').value=S.set.fastH; document.getElementById('s-wday').value=S.set.wday;
+  document.getElementById('s-wdose').value=S.set.wdose;
+  document.getElementById('s-sync').classList.toggle('on',!!S.set.sync);
+  document.getElementById('s-synccyc').classList.toggle('on',!!S.set.synccyc);
+  document.getElementById('sync-state').textContent=S.set.lastSync?('Última: '+new Date(S.set.lastSync).toLocaleString('es-MX')):'Nunca sincronizado';
+}
+function saveSettings(){
+  const c=document.getElementById('s-cycle').value; if(c) S.cycles[S.cycles.length-1]=c;
+  S.set.clen=+document.getElementById('s-clen').value||28;
+  S.set.bleed=+document.getElementById('s-bleed').value||5;
+  S.set.prot=+document.getElementById('s-prot').value||115;
+  S.set.kcal=+document.getElementById('s-kcal').value||1400;
+  S.set.steps=+document.getElementById('s-steps').value||5120;
+  S.set.waterQ=Math.round((+document.getElementById('s-water').value||2.5)*4);
+  S.set.fastH=+document.getElementById('s-fast').value||4;
+  S.set.wday=+document.getElementById('s-wday').value;
+  S.set.wdose=document.getElementById('s-wdose').value||'0.25 mg';
+  S.set.sync=document.getElementById('s-sync').classList.contains('on')?1:0;
+  S.set.synccyc=document.getElementById('s-synccyc').classList.contains('on')?1:0;
+  S.cycles.sort(); save(); closeSheets(); renderAll(); toast('Ajustes guardados ✓');
+}
+function exportData(){ const t=JSON.stringify(S);
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>toast('Respaldo copiado ✓'),()=>fallbackCopy(t)); else fallbackCopy(t); }
+function importData(){ const t=prompt('Pega aquí tu respaldo JSON:'); if(!t)return;
+  try{ const o=JSON.parse(t); if(!o.habits)throw 0; S=o; if(!S.read)S.read=[]; save(); renderAll(); toast('Respaldo restaurado ✓'); }catch(e){ toast('Respaldo inválido'); } }
+
+function askNotif(){ if(!('Notification' in window)){toast('Este iPhone no lo soporta');return;}
+  Notification.requestPermission().then(p=>toast(p==='granted'?'Notificaciones activadas 🔔':'Permiso denegado')); }
+let notified={};
+setInterval(()=>{
+  renderFast();
+  if(S.set.sync) syncNow(true);
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const now=new Date(), L=day(todayISO());
+  S.habits.forEach(h=>{ if(!h.remind||!h.time||L.h[h.id])return;
+    const key=todayISO()+h.id, [hh,mm]=h.time.split(':').map(Number);
+    const d=(now.getHours()*60+now.getMinutes())-(hh*60+mm);
+    if(d<0)return;
+    const slot=h.nag?Math.min(3,Math.floor(d/15)):0;
+    if(d<=(h.nag?45:2) && notified[key]!==slot){ notified[key]=slot;
+      try{ new Notification('Fit Journey · '+h.n,{body:h.dose||'Te toca ahora ✨',tag:h.id}); }catch(e){} }
+  });
+},60000);
+
+/* ============ NAV ============ */
+function go(p){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  document.getElementById('p-'+p).classList.add('on'); document.getElementById('scroll').scrollTop=0; renderAll(); }
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.p));
+
+function renderAll(){ renderHoy(); renderCiclo(); renderProg(); renderCom(); renderLearn(); }
+
+/* --- ingesta de datos de Salud vía parámetros de URL (lo que manda el Atajo) --- */
+(function ingestURL(){
+  // Se lee primero del fragmento (#) porque el navegador NUNCA lo manda al servidor:
+  // así tus pasos y tu fecha de sangrado no quedan en los logs del hosting.
+  const raw=(location.hash&&location.hash.length>1)?location.hash.slice(1):location.search.slice(1);
+  const q=new URLSearchParams(raw);
+  if(![...q.keys()].length) return;
+  const d=q.get('date')&&/^\d{4}-\d{2}-\d{2}$/.test(q.get('date'))?q.get('date'):todayISO();
+  let n=0;
+  if(q.has('steps')){ const v=parseInt(String(q.get('steps')).replace(/[^\d]/g,'')); if(!isNaN(v)){ day(d).steps=v; n++; } }
+  if(q.has('stand')){ const v=parseInt(String(q.get('stand')).replace(/[^\d]/g,'')); if(!isNaN(v)){ day(d).stand=v; if(v>=8) day(d).h['stand']=true; n++; } }
+  if(q.has('exercise')){ const v=parseInt(String(q.get('exercise')).replace(/[^\d]/g,'')); if(!isNaN(v)) day(d).exercise=v; }
+  const p=q.get('period')||q.get('lastPeriod');
+  if(p && /^\d{4}-\d{2}-\d{2}$/.test(p) && !S.cycles.includes(p)){ S.cycles.push(p); S.cycles.sort(); n++; }
+  if(n){ S.set.lastSync=new Date().toISOString(); S.set.sync=1; save(); }
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  if(n) setTimeout(()=>toast('Salud sincronizada ✓ '+n+' dato'+(n>1?'s':'')),700);
+})();
+
+renderAll();
+if(S.set.sync) syncNow(true);
+
+/* --- funcionar sin internet (solo aplica en HTTPS) --- */
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ if(VIEW!==todayISO()&&!S.log[VIEW]) VIEW=todayISO(); renderAll(); if(S.set.sync) syncNow(true); }});
+</script>
+</body>
+</html>
