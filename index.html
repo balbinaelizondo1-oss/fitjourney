@@ -247,6 +247,9 @@
     <div class="sec">Descanso pancreático</div>
     <div class="fast" id="fastcard"></div>
 
+    <div class="sec"><span>Ansiedad por comer</span><span class="add" onclick="newCraving()">＋</span></div>
+    <div class="card t-peach" id="cravcard"></div>
+
     <div id="hgroups"></div>
 
     <button class="addbtn" onclick="newHabit()" style="margin-top:4px">＋ Agregar hábito</button>
@@ -319,6 +322,12 @@
 
     <div class="sec">Rachas</div>
     <div id="streaks"></div>
+
+    <div class="sec">Ventanas de descanso pancreático</div>
+    <div id="windows"></div>
+
+    <div class="sec">Ansiedad por comer</div>
+    <div id="cravings-analysis"></div>
 
     <div class="sec">Agua · últimos 14 días</div>
     <div class="card"><div class="steps" id="waterchart"></div>
@@ -486,6 +495,21 @@
   <div><span class="f-lbl">InBody Score</span><input class="f-in" id="ib-score" type="number" inputmode="numeric"></div></div>
   <span class="f-lbl">Día de tu ciclo al medirte</span><input class="f-in" id="ib-cd" type="number" inputmode="numeric">
   <button class="savebtn" onclick="saveInbody()">Guardar medición</button>
+</div>
+
+<!-- antojo / ansiedad -->
+<div class="sheet" id="sheet-cr">
+  <div class="grab"></div>
+  <h3 id="cr-title">Registrar antojo</h3>
+  <div class="kicker">Solo información. No es falta de voluntad y no tienes que "resistirlo" para anotarlo.</div>
+  <span class="f-lbl">¿Qué tan fuerte?</span><div class="chips" id="cr-lvl"></div>
+  <span class="f-lbl">Hora</span><input class="f-in" id="cr-time" type="time">
+  <span class="f-lbl">¿Qué venía antes? (opcional)</span><div class="chips" id="cr-trig"></div>
+  <span class="f-lbl">¿Qué se te antojaba?</span><input class="f-in" id="cr-what" placeholder="ej. algo dulce, pan, botana salada">
+  <span class="f-lbl">Nota</span><input class="f-in" id="cr-note" placeholder="opcional">
+  <div class="row-tog" style="border:0"><div><div class="rt">Acabé comiendo</div><div class="rs">Sin juicio — sirve para ver el patrón</div></div><div class="tog" id="cr-ate" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <button class="savebtn" onclick="saveCraving()">Guardar</button>
+  <button class="delbtn" id="cr-del" onclick="deleteCraving()" style="display:none">Eliminar</button>
 </div>
 
 <!-- visor de foto -->
@@ -703,7 +727,13 @@ const LIB=[
   b:['NEAT es toda la energía que quemas fuera del ejercicio formal: caminar, estar de pie, moverte, gesticular, subir escaleras.',
      'En dos personas del mismo peso, el NEAT puede diferir hasta 2,000 kcal al día. Es la variable más grande y más ignorada del gasto energético.',
      'Subir de 3,118 a 5,120 pasos son unas 80–100 kcal extra al día: 600–700 a la semana. No es espectacular en un día, pero es acumulativo y no dispara hambre compensatoria como el cardio intenso.']},
- {id:'wegovy',tag:'Tratamiento',t:'Qué hace exactamente la semaglutida',open:1,unlocks:['titulacion','masa-magra-glp1'],
+ {id:'food-noise',tag:'Tratamiento',t:'"Food noise": qué es y por qué se apaga',
+  b:['El "ruido de comida" es el pensamiento intrusivo y repetitivo sobre comer: planear el siguiente antojo, pensar en lo que hay en la alacena, no poder soltar la idea. No es hambre fisiológica.',
+     'Vive en circuitos de recompensa —dopamina en el estriado— más que en los de hambre del hipotálamo. Por eso puedes estar llena y seguir con el ruido puesto.',
+     'Los agonistas GLP-1 actúan también en esas áreas, y por eso muchas personas describen el efecto como "se hizo el silencio" más que como "ya no tengo hambre".',
+     'Registrarlo tiene un valor concreto: si el ruido baja mientras el peso todavía no se mueve, el tratamiento sí está haciendo algo. Y si vuelve a subir en la segunda mitad de tu ciclo, eso es progesterona cayendo, no un retroceso tuyo.',
+     'Una advertencia honesta: si notas que anotar antojos te hace sentir vigilada o culpable en vez de informada, deja de anotarlos. La herramienta está para darte datos, no para calificarte.']},
+ {id:'wegovy',tag:'Tratamiento',t:'Qué hace exactamente la semaglutida',open:1,unlocks:['titulacion','masa-magra-glp1','food-noise'],
   b:['La semaglutida imita al GLP-1, una hormona que tu intestino libera al comer. Actúa en tres frentes: enlentece el vaciamiento gástrico, potencia la secreción de insulina solo cuando hay glucosa, y actúa en el hipotálamo reduciendo el apetito y el "food noise".',
      'Tarda de 2 a 4 semanas en alcanzar concentración plasmática estable, y la vida media es de ~1 semana — por eso es una inyección semanal.',
      'Efectos secundarios comunes al subir dosis: náusea, reflujo, estreñimiento. La chía y el agua atacan directamente el tercero.']},
@@ -926,8 +956,9 @@ addEventListener('pagehide',()=>{ try{save();}catch(e){} });
 addEventListener('beforeunload',()=>{ try{save();}catch(e){} });
 
 let VIEW=todayISO();
-function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null,fastFrom:null};
-  const L=S.log[d]; if(!L.t)L.t={}; if(!L.meals)L.meals=[]; if(!L.h)L.h={}; return L; }
+function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null};
+  const L=S.log[d]; if(!L.t)L.t={}; if(!L.meals)L.meals=[]; if(!L.h)L.h={};
+  if(!L.windows)L.windows=[]; if(!L.cravings)L.cravings=[]; return L; }
 function hm2min(s){ const[a,b]=String(s).split(':').map(Number); return a*60+b; }
 function min2hm(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 function addMin(hm,n){ return min2hm(hm2min(hm)+n); }
@@ -1019,6 +1050,60 @@ function renderHoy(){
 
   renderFast(); renderWegovy(); updateSaveBadge();
 }
+/* ---- ansiedad por comer ---- */
+const CLVL=[['1','Leve'],['2','Media'],['3','Fuerte']];
+const CTRIG=['','Estrés','Aburrimiento','Lo vi / lo olí','Hambre real','Cansancio','Dormí mal','Antes de la regla','Sin comer hace rato'];
+const CCOL={1:'#F3C6CD',2:'#E09AAB',3:'#B0576F'};
+let CEDIT=null;
+function newCraving(){ CEDIT=null;
+  chips(document.getElementById('cr-lvl'),CLVL,'2');
+  chips(document.getElementById('cr-trig'),CTRIG,'');
+  document.getElementById('cr-title').textContent='Registrar antojo';
+  document.getElementById('cr-time').value=nowHM();
+  document.getElementById('cr-what').value=''; document.getElementById('cr-note').value='';
+  document.getElementById('cr-ate').classList.remove('on');
+  document.getElementById('cr-del').style.display='none';
+  openSheet('sheet-cr');
+}
+function editCraving(id){ const L=day(VIEW), c=(L.cravings||[]).find(x=>x.id===id); if(!c)return; CEDIT=c;
+  chips(document.getElementById('cr-lvl'),CLVL,String(c.lvl||2));
+  chips(document.getElementById('cr-trig'),CTRIG,c.trig||'');
+  document.getElementById('cr-title').textContent='Editar antojo';
+  document.getElementById('cr-time').value=c.t; document.getElementById('cr-what').value=c.what||'';
+  document.getElementById('cr-note').value=c.note||'';
+  document.getElementById('cr-ate').classList.toggle('on',!!c.ate);
+  document.getElementById('cr-del').style.display='block';
+  openSheet('sheet-cr');
+}
+function saveCraving(){
+  const L=day(VIEW);
+  const o={ id:CEDIT?CEDIT.id:Date.now(), t:document.getElementById('cr-time').value||nowHM(),
+    lvl:+chipVal(document.getElementById('cr-lvl'))||2, trig:chipVal(document.getElementById('cr-trig')),
+    what:document.getElementById('cr-what').value.trim(), note:document.getElementById('cr-note').value.trim(),
+    ate:document.getElementById('cr-ate').classList.contains('on')?1:0, cd:cycleDay(VIEW) };
+  if(CEDIT){ const i=L.cravings.findIndex(x=>x.id===CEDIT.id); L.cravings[i]=o; } else L.cravings.push(o);
+  L.cravings.sort((a,b)=>a.t<b.t?-1:1);
+  save(); closeSheets(); renderAll(); toast('Registrado ✓');
+}
+function deleteCraving(){ if(!CEDIT)return; const L=day(VIEW); L.cravings=L.cravings.filter(x=>x.id!==CEDIT.id);
+  save(); closeSheets(); renderAll(); toast('Eliminado'); }
+function renderCravings(){
+  const L=day(VIEW), cs=(L.cravings||[]).slice().sort((a,b)=>a.t<b.t?-1:1);
+  const el=document.getElementById('cravcard'); if(!el)return;
+  const prom=(()=>{ let t=0,n=0; for(let i=13;i>=0;i--){ const k=addDays(todayISO(),-i);
+    if(S.log[k]){ t+=(S.log[k].cravings||[]).length; n++; } } return n?(t/n):0; })();
+  el.innerHTML=`
+    <div style="display:flex;align-items:baseline;justify-content:space-between">
+      <b style="font-size:22px">${cs.length}</b>
+      <span style="font-size:11px;color:#96604f">hoy · promedio ${prom.toFixed(1)}/día</span>
+    </div>
+    <div style="font-size:11.5px;color:#96604f;margin-top:3px">Anotarlos no es juzgarte: es ver a qué hora y en qué fase de tu ciclo aparecen.</div>
+    ${cs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">${cs.map(c=>
+      `<span onclick="editCraving(${c.id})" style="background:${CCOL[c.lvl]||CCOL[2]};color:#fff;border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700">
+        ${c.t}${c.ate?' 🍽️':''}</span>`).join('')}</div>`:''}
+    <button class="addbtn" style="margin:12px 0 0;border-color:#E7CFC6;color:#96604f" onclick="newCraving()">＋ Tengo antojo ahora</button>`;
+}
+
 function weekStart(d){const x=parseISO(d);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return iso(x);}
 function weekCount(id,d){let c=0;const ws=weekStart(d);for(let i=0;i<7;i++){const k=addDays(ws,i);if(S.log[k]&&S.log[k].h&&S.log[k].h[id])c++;}return c;}
 function streak(id){ let c=0,d=todayISO(); if(!(S.log[d]&&S.log[d].h&&S.log[d].h[id])) d=addDays(d,-1);
@@ -1074,17 +1159,28 @@ function lastCaloric(){
   (L.meals||[]).forEach(m=>{ if(m.breaks!==0){ if(!best||m.t>best) best=m.t; } });
   return best;
 }
+function activeWindow(){ return (day(todayISO()).windows||[]).find(w=>!w.end)||null; }
 function fastState(){
-  const L=day(todayISO()), t=lastCaloric(), M=S.set.mealMin||20;
-  if(!t) return {phase:'none'};
-  const mealEnd=addMin(t,M);
-  const open=(L.fastFrom && hm2min(L.fastFrom)>=hm2min(t))?L.fastFrom:null;
-  if(open) return {phase:'fast', from:open, meal:t};
-  if(hm2min(nowHM())<hm2min(mealEnd)) return {phase:'meal', from:t, end:mealEnd};
-  return {phase:'await', from:t, end:mealEnd};
+  const M=S.set.mealMin||20, t=lastCaloric(), w=activeWindow();
+  if(w) return {phase:'fast', w, meal:t};
+  if(t && hm2min(nowHM())<hm2min(addMin(t,M))) return {phase:'meal', from:t, end:addMin(t,M)};
+  return {phase:'idle', lastMeal:t, suggested:t?addMin(t,M):nowHM()};
 }
-function closeMeal(at){ const L=day(todayISO()); L.fastFrom=at||nowHM(); save(); renderAll();
-  toast('Ventana de descanso abierta · cuenta desde las '+L.fastFrom); }
+function startWindow(at){
+  const L=day(todayISO()), h=at||nowHM();
+  (L.windows||[]).forEach(w=>{ if(!w.end){ w.end=h; w.reason='reinicio'; } });
+  L.windows.push({id:Date.now(), start:h, target:S.set.fastH||4});
+  save(); renderAll(); toast('Ventana abierta · cuenta desde las '+h);
+}
+function closeWindow(reason,at){
+  const w=activeWindow(); if(!w)return;
+  w.end=at||nowHM(); w.reason=reason||'manual';
+  const mins=hm2min(w.end)-hm2min(w.start);
+  save(); renderAll();
+  toast(mins>=w.target*60 ? '✓ Ventana cumplida · '+fmin(mins) : 'Ventana cerrada a las '+fmin(mins));
+}
+function setWindowStart(v){ const w=activeWindow(); if(!w||!v)return; w.start=v; save(); renderAll(); toast('Inicio ajustado a las '+v); }
+function closeMeal(at){ startWindow(at); }
 const fmin=m=>Math.floor(m/60)+':'+String(Math.floor(m%60)).padStart(2,'0');
 function ringSVG(pct,label,col){
   return `<svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
@@ -1097,11 +1193,22 @@ function renderFast(){
   const c=document.getElementById('fastcard'), mini=document.getElementById('fastmini');
   const st=fastState(), H=S.set.fastH||4, M=S.set.mealMin||20, now=hm2min(nowHM());
 
-  if(st.phase==='none'){
-    c.style.background='linear-gradient(140deg,#7E4E5F,#A76A7E)';
-    c.innerHTML=`<div class="st">Sin ingestas hoy</div><div class="row"><div style="flex:1"><div class="t">—</div>
-      <div class="s">Registra tu primera comida del día para arrancar el contador.</div></div></div>`;
-    mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">Sin ingestas registradas hoy</b></div>`;
+  if(st.phase==='idle'){
+    c.style.background='linear-gradient(140deg,#8A6472,#B08A98)';
+    c.innerHTML=`<div class="st">Ventana cerrada</div>
+      <div class="row"><div style="font-size:40px">🔓</div>
+        <div style="flex:1"><div class="t" style="font-size:22px">${H} h</div>
+          <div class="s">${st.lastMeal?'Tu última ingesta fue a las '+st.lastMeal:'Aún no registras ingestas hoy'}</div></div></div>
+      <div class="note">Ábrela cuando hayas dado el último bocado. Puedes empezarla en el momento que quieras y ajustar la hora si se te pasó marcarla.</div>
+      <button class="addbtn" style="margin:14px 0 0;border-color:rgba(255,255,255,.5);color:#fff;font-size:14px" onclick="startWindow()">🔓 Iniciar ventana ahora (${nowHM()})</button>
+      ${st.lastMeal?`<button class="addbtn" style="margin:8px 0 0;border-color:rgba(255,255,255,.28);color:rgba(255,255,255,.85);font-size:12.5px" onclick="startWindow('${st.suggested}')">Empezar desde que terminé de comer (${st.suggested})</button>`:''}
+      <div style="display:flex;align-items:center;gap:9px;margin-top:10px">
+        <span style="font-size:11.5px;opacity:.75">O desde otra hora:</span>
+        <input type="time" value="${st.suggested}" onchange="startWindow(this.value)"
+          style="flex:1;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:11px;padding:9px 11px;font-size:14px">
+      </div>`;
+    mini.innerHTML=`<div style="font-size:22px">🔓</div><div style="flex:1"><b style="font-size:13.5px">Ventana de descanso cerrada</b>
+      <div style="font-size:11px;opacity:.75;margin-top:2px">Ábrela desde Hoy cuando termines de comer</div></div>`;
     return;
   }
 
@@ -1120,31 +1227,24 @@ function renderFast(){
     return;
   }
 
-  if(st.phase==='await'){
-    c.style.background='linear-gradient(140deg,#8A6472,#B08A98)';
-    c.innerHTML=`<div class="st">Comida terminada</div>
-      <div class="row"><div style="font-size:40px">🔓</div>
-        <div style="flex:1"><div class="t" style="font-size:22px">${st.end}</div>
-          <div class="s">hora en que se cumplieron tus ${M} min de comida</div></div></div>
-      <div class="note">Tu ventana de descanso pancreático no arranca sola: ábrela cuando de verdad hayas dado el último bocado. Contará las ${H} h desde las ${st.end}.</div>
-      <button class="addbtn" style="margin:14px 0 0;border-color:rgba(255,255,255,.5);color:#fff;font-size:14px" onclick="closeMeal('${st.end}')">🔓 Abrir ventana de descanso pancreático</button>
-      <button class="addbtn" style="margin:8px 0 0;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8);font-size:12.5px" onclick="closeMeal()">Sigo comiendo — abrirla ahora (${nowHM()})</button>`;
-    mini.innerHTML=`<div style="font-size:22px">🔓</div><div style="flex:1"><b style="font-size:13.5px">Falta abrir tu ventana de descanso</b>
-      <div style="font-size:11px;opacity:.75;margin-top:2px">Terminaste de comer a las ${st.end}</div></div>`;
-    return;
-  }
-
-  // fase de ayuno
+  // ventana abierta
+  const w=st.w, T=(w.target||H)*60;
   c.style.background='linear-gradient(140deg,#7E4E5F,#A76A7E)';
-  const el=Math.max(0,now-hm2min(st.from)), total=H*60, pct=Math.min(1,el/total), rem=Math.max(0,total-el);
-  const endS=addMin(st.from,total), s=fastStory(el,total);
+  const el=Math.max(0,now-hm2min(w.start)), pct=Math.min(1,el/T), rem=Math.max(0,T-el);
+  const endS=addMin(w.start,T), s=fastStory(el,T);
   c.innerHTML=`<div class="st">${s.st}</div>
    <div class="row">${ringSVG(pct,Math.round(pct*100)+'%','#F7D5DC')}
     <div style="flex:1"><div class="t">${fmin(el)}</div>
-      <div class="s">desde que cerraste tu comida (${st.from})</div>
-      <div style="font-size:12px;font-weight:700;color:#F7D5DC;margin-top:8px">${pct>=1?'Puedes comer limpio':'Faltan '+fmin(rem)+' · a las '+endS}</div></div>
+      <div class="s">de tu ventana de ${w.target||H} h</div>
+      <div style="font-size:12px;font-weight:700;color:#F7D5DC;margin-top:8px">${pct>=1?'✓ Cumplida · puedes comer limpio':'Faltan '+fmin(rem)+' · a las '+endS}</div></div>
    </div>
-   <div class="note">${s.n}</div><div class="tip">💡 ${s.tip}</div>`;
+   <div class="note">${s.n}</div><div class="tip">💡 ${s.tip}</div>
+   <div style="display:flex;align-items:center;gap:9px;margin-top:13px">
+     <span style="font-size:11.5px;opacity:.75">Empezó a las</span>
+     <input type="time" value="${w.start}" onchange="setWindowStart(this.value)"
+       style="flex:1;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:11px;padding:9px 11px;font-size:14px">
+   </div>
+   <button class="addbtn" style="margin:9px 0 0;border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.9);font-size:13px" onclick="closeWindow('manual')">Cerrar ventana</button>`;
   mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">${s.st} · ${fmin(el)}</b>
     <div style="font-size:11px;opacity:.75;margin-top:2px">${pct>=1?'Ventana cumplida':'Próxima ingesta limpia a las '+endS}</div></div>`;
 }
@@ -1169,7 +1269,8 @@ function markDose(){ if(!nextWegovy())return; S.wegovy.push(todayISO()); S.wegov
 function toggleHabit(h){
   const L=day(); const on=!L.h[h.id]; L.h[h.id]=on;
   if(on){ L.t[h.id]=nowHM();
-    if(h.breaks && VIEW===todayISO()) L.meals.push({id:Date.now(),t:L.t[h.id],name:h.n,ic:h.ic,kc:0,p:0,c:0,f:0,breaks:1,auto:h.id});
+    if(h.breaks && VIEW===todayISO()){ L.meals.push({id:Date.now(),t:L.t[h.id],name:h.n,ic:h.ic,kc:0,p:0,c:0,f:0,breaks:1,auto:h.id});
+      if(activeWindow()) closeWindow('comida', L.t[h.id]); }
   } else { delete L.t[h.id]; L.meals=(L.meals||[]).filter(m=>m.auto!==h.id); }
   save(); renderAll();
 }
@@ -1302,6 +1403,78 @@ function renderProg(){
     row('Déficit limpio','300 – 400 kcal','var(--rose-d)');
 }
 function row(a,b,c){return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:var(--muted)">${a}</span><b style="color:${c||'inherit'}">${b}</b></div>`;}
+
+/* ---- historial de ventanas ---- */
+function allWindows(){ const out=[];
+  Object.keys(S.log).forEach(d=>{ (S.log[d].windows||[]).forEach(w=>out.push(Object.assign({date:d},w))); });
+  return out.sort((a,b)=>(a.date+a.start)<(b.date+b.start)?1:-1); }
+function renderWindows(){
+  const el=document.getElementById('windows'); if(!el)return;
+  const all=allWindows(), done=all.filter(w=>w.end);
+  if(!all.length){ el.innerHTML=`<div class="card" style="font-size:12.5px;color:var(--muted);line-height:1.6">
+    Aún no hay ventanas registradas. Ábrelas desde <b>Hoy</b> cuando termines de comer.</div>`; return; }
+  const ws=weekStart(todayISO());
+  const sem=done.filter(w=>w.date>=ws);
+  const cumpl=w=>hm2min(w.end)-hm2min(w.start)>=(w.target||4)*60;
+  const okSem=sem.filter(cumpl).length;
+  const prom=done.length?done.reduce((a,w)=>a+(hm2min(w.end)-hm2min(w.start)),0)/done.length:0;
+  el.innerHTML=`<div class="card">
+      <div style="display:flex;gap:10px;text-align:center">
+        <div style="flex:1"><div style="font-size:22px;font-weight:800">${okSem}</div><div style="font-size:10.5px;color:var(--muted)">cumplidas esta semana</div></div>
+        <div style="flex:1"><div style="font-size:22px;font-weight:800">${fmin(prom)}</div><div style="font-size:10.5px;color:var(--muted)">duración promedio</div></div>
+        <div style="flex:1"><div style="font-size:22px;font-weight:800">${done.filter(cumpl).length}/${done.length}</div><div style="font-size:10.5px;color:var(--muted)">cumplidas en total</div></div>
+      </div></div>`+
+    all.slice(0,12).map(w=>{
+      const abierta=!w.end, mins=abierta?(hm2min(nowHM())-hm2min(w.start)):(hm2min(w.end)-hm2min(w.start));
+      const ok=!abierta&&cumpl(w);
+      return `<div class="meal"><div class="e">${abierta?'⏳':ok?'✅':'⌛'}</div>
+        <div class="t"><b>${fmtShort(w.date)} · ${w.start}${w.end?' → '+w.end:''}</b>
+        <span>${abierta?'en curso':(ok?'cumplida':'quedó corta')} · meta ${w.target||4} h${w.reason==='comida'?' · la cerró una comida':w.reason==='manual'?' · cerrada a mano':''}</span></div>
+        <div class="n"><b>${fmin(Math.max(0,mins))}</b>h</div></div>`;
+    }).join('');
+}
+
+/* ---- análisis de ansiedad ---- */
+function renderCravAnalysis(){
+  const el=document.getElementById('cravings-analysis'); if(!el)return;
+  const all=[]; Object.keys(S.log).forEach(d=>(S.log[d].cravings||[]).forEach(c=>all.push(Object.assign({date:d},c))));
+  if(!all.length){ el.innerHTML=`<div class="card" style="font-size:12.5px;color:var(--muted);line-height:1.6">
+    Cuando registres antojos en <b>Hoy</b>, aquí vas a ver a qué horas aparecen y en qué fase de tu ciclo se disparan. Con dos o tres semanas ya se nota el patrón.</div>`; return; }
+
+  // por franja de 3 h
+  const franjas=[[0,'0–3'],[3,'3–6'],[6,'6–9'],[9,'9–12'],[12,'12–15'],[15,'15–18'],[18,'18–21'],[21,'21–24']];
+  const porH=franjas.map(([h])=>all.filter(c=>{const x=hm2min(c.t)/60; return x>=h&&x<h+3;}).length);
+  const maxH=Math.max(1,...porH);
+  const pico=franjas[porH.indexOf(Math.max(...porH))][1];
+
+  // por fase del ciclo
+  const fases=['Menstrual','Folicular','Ovulatoria','Lútea'];
+  const porF=[0,0,0,0], diasF=[0,0,0,0];
+  all.forEach(c=>{ const n=c.cd||cycleDay(c.date); porF[phaseOf(n).i]++; });
+  const diasVistos={}; Object.keys(S.log).forEach(d=>{ const i=phaseOf(cycleDay(d)).i; diasF[i]++; diasVistos[d]=1; });
+  const tasa=porF.map((v,i)=>diasF[i]?v/diasF[i]:0); const maxF=Math.max(0.001,...tasa);
+
+  const comio=all.filter(c=>c.ate).length;
+  el.innerHTML=`
+   <div class="card">
+     <div style="display:flex;gap:10px;text-align:center">
+       <div style="flex:1"><div style="font-size:22px;font-weight:800">${all.length}</div><div style="font-size:10.5px;color:var(--muted)">registrados</div></div>
+       <div style="flex:1"><div style="font-size:22px;font-weight:800">${pico}h</div><div style="font-size:10.5px;color:var(--muted)">tu franja pico</div></div>
+       <div style="flex:1"><div style="font-size:22px;font-weight:800">${Math.round(comio/all.length*100)}%</div><div style="font-size:10.5px;color:var(--muted)">terminó en comida</div></div>
+     </div>
+   </div>
+   <div class="card">
+     <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase">A qué hora aparecen</div>
+     <div class="steps">${porH.map(v=>`<i style="height:${Math.max(3,v/maxH*100)}%;background:var(--peach)"></i>`).join('')}</div>
+     <div style="display:flex;font-size:9px;color:var(--muted);margin-top:5px">${franjas.map(f=>`<span style="flex:1;text-align:center">${f[1]}</span>`).join('')}</div>
+   </div>
+   <div class="card">
+     <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase">Por fase de tu ciclo</div>
+     <div class="steps">${tasa.map(v=>`<i style="height:${Math.max(3,v/maxF*100)}%;background:var(--rose)"></i>`).join('')}</div>
+     <div style="display:flex;font-size:9px;color:var(--muted);margin-top:5px">${fases.map(f=>`<span style="flex:1;text-align:center">${f}</span>`).join('')}</div>
+     <div style="font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:10px">Promedio de antojos por día en cada fase. Si la barra lútea es la más alta, es lo esperable: la progesterona cae al final del ciclo y con ella la serotonina. No es que te estés "descuidando" esos días.</div>
+   </div>`;
+}
 
 /* ---- fotos de progreso ---- */
 function nearestInbody(d){ if(!S.inbody.length)return null;
@@ -1564,7 +1737,8 @@ function saveMeal(){
     seq:chipVal(document.getElementById('m-seq'))==='1'?1:0,
     breaks:document.getElementById('m-breaks').classList.contains('on')?1:0, photo:MPHOTO,
     auto:MEDIT?MEDIT.auto:undefined };
-  if(MEDIT){ const i=L.meals.findIndex(x=>x.id===MEDIT.id); L.meals[i]=m; } else L.meals.push(m);
+  if(MEDIT){ const i=L.meals.findIndex(x=>x.id===MEDIT.id); L.meals[i]=m; }
+  else { L.meals.push(m); if(m.breaks && VIEW===todayISO() && activeWindow()) closeWindow('comida', m.t); }
   save(); closeSheets(); renderAll(); toast('Comida guardada ✓');
 }
 function deleteMeal(){ if(!MEDIT)return; const L=day(VIEW); L.meals=L.meals.filter(x=>x.id!==MEDIT.id);
@@ -1764,7 +1938,7 @@ function go(p){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle(
   document.getElementById('p-'+p).classList.add('on'); document.getElementById('scroll').scrollTop=0; renderAll(); }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.p));
 
-function renderAll(){ renderHoy(); renderCiclo(); renderProg(); renderPhotos(); renderCom(); renderLearn(); }
+function renderAll(){ renderHoy(); renderCravings(); renderCiclo(); renderProg(); renderWindows(); renderCravAnalysis(); renderPhotos(); renderCom(); renderLearn(); }
 
 /* --- ingesta de datos de Salud vía parámetros de URL (lo que manda el Atajo) --- */
 (function ingestURL(){
