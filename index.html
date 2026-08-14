@@ -140,7 +140,19 @@
   .steps i{flex:1;background:var(--rose);border-radius:5px 5px 3px 3px;opacity:.9;min-height:3px}
 
   .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
-  .hc{aspect-ratio:1;border-radius:7px;background:#F4E7EA;display:grid;place-items:center;font-size:8.5px;color:#C9B4BA;font-weight:700}
+  .hc{aspect-ratio:1;border-radius:7px;background:#F4E7EA;display:grid;place-items:center;font-size:8.5px;color:#C9B4BA;font-weight:700;position:relative}
+  .hc.pic::after{content:'';position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px var(--rose-d)}
+
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .pg{aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:var(--rose-l);position:relative}
+  .pg img{width:100%;height:100%;object-fit:cover;display:block}
+  .pg .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;font-size:9px;font-weight:700;color:#fff;
+           background:linear-gradient(transparent,rgba(60,35,45,.75));text-align:center}
+  .pmonth{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:14px 4px 8px}
+  .cmp{display:flex;gap:8px}
+  .cmp>div{flex:1;text-align:center}
+  .cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px;display:block}
+  .cmp span{font-size:10.5px;color:var(--muted);display:block;margin-top:5px}
 
   .lrn{background:#fff;border-radius:18px;padding:15px;margin-bottom:10px;box-shadow:0 1px 2px rgba(150,90,110,.07);position:relative}
   .lrn b{font-size:14px;display:block;padding-right:52px} .lrn p{margin:5px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
@@ -298,6 +310,12 @@
       </div>
       <div class="heat" id="heat"></div>
     </div>
+
+    <div class="sec"><span>Fotos de progreso</span><span class="add" onclick="document.getElementById('pf-file').click()">＋</span></div>
+    <div id="photo-compare"></div>
+    <button class="aibtn" onclick="document.getElementById('pf-file').click()">📸 Tomar foto en el espejo</button>
+    <input type="file" id="pf-file" accept="image/*" style="display:none">
+    <div id="photos"></div>
 
     <div class="sec">Rachas</div>
     <div id="streaks"></div>
@@ -470,6 +488,18 @@
   <button class="savebtn" onclick="saveInbody()">Guardar medición</button>
 </div>
 
+<!-- visor de foto -->
+<div class="sheet" id="sheet-pf">
+  <div class="grab"></div>
+  <h3 id="pf-t"></h3><div class="kicker" id="pf-k"></div>
+  <div style="margin-top:14px"><img id="pf-img" style="width:100%;border-radius:20px;display:block"></div>
+  <div id="pf-meta" style="margin-top:14px"></div>
+  <span class="f-lbl">Nota</span>
+  <input class="f-in" id="pf-note" placeholder="ej. mismo espejo, luz de la mañana">
+  <button class="savebtn" onclick="savePhotoNote()">Guardar nota</button>
+  <button class="delbtn" onclick="deletePhoto()">Eliminar foto</button>
+</div>
+
 <!-- artículo -->
 <div class="sheet" id="sheet-a">
   <div class="grab"></div>
@@ -500,7 +530,9 @@
   <div><span class="f-lbl">Calorías</span><input class="f-in" id="s-kcal" type="number" inputmode="numeric"></div></div>
   <div class="f2"><div><span class="f-lbl">Pasos</span><input class="f-in" id="s-steps" type="number" inputmode="numeric"></div>
   <div><span class="f-lbl">Stanleys</span><input class="f-in" id="s-water" type="number" step="0.25" inputmode="decimal"></div></div>
-  <span class="f-lbl">Ventana entre ingestas (horas)</span><input class="f-in" id="s-fast" type="number" step="0.5" inputmode="decimal">
+  <div class="f2"><div><span class="f-lbl">Ventana entre ingestas (h)</span><input class="f-in" id="s-fast" type="number" step="0.5" inputmode="decimal"></div>
+  <div><span class="f-lbl">Duración de comida (min)</span><input class="f-in" id="s-meal" type="number" inputmode="numeric"></div></div>
+  <div class="f-hint">La ventana de descanso cuenta desde que <b>cierras</b> la comida, no desde el primer bocado.</div>
 
   <h4>Wegovy</h4>
   <div class="f2"><div><span class="f-lbl" style="margin-top:0">Día de inyección</span>
@@ -629,7 +661,13 @@ const DEF_HABITS=[
 
 /* ============ BIBLIOTECA PROGRESIVA ============ */
 const LIB=[
- {id:'ventana4h',tag:'Metabolismo',t:'La ventana de 4 h entre ingestas',open:1,unlocks:['glucagon','autofagia'],
+ {id:'comer-lento',tag:'Nutrición',t:'Los 20 minutos de la saciedad',
+  b:['Cuando comes, el intestino libera CCK y PYY, y el estómago deja de mandar grelina. Ese circuito tarda entre 15 y 20 minutos en llegar al hipotálamo y traducirse en "ya estoy llena".',
+     'Si terminas el plato en 8 minutos, la señal llega cuando ya comiste de más. No es falta de fuerza de voluntad: es un desfase de tiempo.',
+     'En estudios de laboratorio, la misma comida ingerida despacio produce más saciedad y menos ingesta posterior que ingerida rápido.',
+     'Con Wegovy hay un motivo extra: el vaciamiento gástrico ya está enlentecido. Comer rápido con el estómago vaciándose despacio es la receta directa de la náusea y el reflujo que reportan muchas personas al subir dosis.',
+     'Lo práctico: deja el tenedor entre bocados, mastica hasta deshacer, y no te levantes antes de que suene el timer.']},
+ {id:'ventana4h',tag:'Metabolismo',t:'La ventana de 4 h entre ingestas',open:1,unlocks:['glucagon','autofagia','comer-lento'],
   b:['Cada bocado con calorías —aunque sea un puñado de nueces— levanta insulina y apaga la lipasa sensible a hormonas (HSL). Mientras la insulina esté alta, tu tejido adiposo está en modo "guardar", no en modo "soltar".',
      'Cuatro horas limpias permiten que la insulina regrese a su nivel basal, que el páncreas descanse de secretar, y que la HSL vuelva a romper triglicéridos sin interrupción.',
      'Agua natural, café solo, té e infusiones sin azúcar no rompen la ventana: no aportan sustrato que dispare insulina.',
@@ -778,21 +816,26 @@ const LIB=[
 function seed(){
   return {v:2, habits:JSON.parse(JSON.stringify(DEF_HABITS)),
     log:{}, inbody:[{date:'2026-08-11',w:65.2,smm:26.3,pbf:27.6,fat:18.0,vis:7,bmi:24.5,tmb:1390,score:79,cd:12}],
-    cycles:['2026-07-31'], read:[],
-    set:{clen:28,bleed:5,prot:115,kcal:1400,steps:5120,waterQ:10,fastH:4,wday:2,wdose:'0.25 mg',sync:0,synccyc:0},
+    cycles:['2026-07-31'], read:[], photos:[],
+    set:{clen:28,bleed:5,prot:115,kcal:1400,steps:5120,waterQ:10,fastH:4,mealMin:20,wday:2,wdose:'0.25 mg',sync:0,synccyc:0},
     wegovy:['2026-08-04','2026-08-11']};
 }
 let S;
 try{ S=JSON.parse(localStorage.getItem(KEY))||seed(); }catch(e){ S=seed(); }
 if(!S||!S.habits) S=seed();
 if(!S.read) S.read=[];
+if(!S.photos) S.photos=[];
 if(S.set.bleed==null) S.set.bleed=5;
 if(S.set.sync==null) S.set.sync=0;
+if(S.set.mealMin==null) S.set.mealMin=20;
 function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('Sin espacio: borra fotos viejas');} }
 
 let VIEW=todayISO();
-function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null};
+function day(d){ d=d||VIEW; if(!S.log[d]) S.log[d]={h:{},t:{},wq:0,meals:[],steps:null,stand:null,fastFrom:null};
   const L=S.log[d]; if(!L.t)L.t={}; if(!L.meals)L.meals=[]; if(!L.h)L.h={}; return L; }
+function hm2min(s){ const[a,b]=String(s).split(':').map(Number); return a*60+b; }
+function min2hm(m){ m=((m%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function addMin(hm,n){ return min2hm(hm2min(hm)+n); }
 
 const BG={blush:'var(--blush-l)',peach:'var(--peach-l)',rose:'var(--rose-l)',mauve:'var(--mauve-l)',wine:'var(--wine-l)'};
 const GNAMES={manana:'Mañana',comidas:'Comidas',mov:'Movimiento',noche:'Noche'};
@@ -936,34 +979,78 @@ function lastCaloric(){
   (L.meals||[]).forEach(m=>{ if(m.breaks!==0){ if(!best||m.t>best) best=m.t; } });
   return best;
 }
+function fastState(){
+  const L=day(todayISO()), t=lastCaloric(), M=S.set.mealMin||20;
+  if(!t) return {phase:'none'};
+  const mealEnd=addMin(t,M);
+  const open=(L.fastFrom && hm2min(L.fastFrom)>=hm2min(t))?L.fastFrom:null;
+  if(open) return {phase:'fast', from:open, meal:t};
+  if(hm2min(nowHM())<hm2min(mealEnd)) return {phase:'meal', from:t, end:mealEnd};
+  return {phase:'await', from:t, end:mealEnd};
+}
+function closeMeal(at){ const L=day(todayISO()); L.fastFrom=at||nowHM(); save(); renderAll();
+  toast('Ventana de descanso abierta · cuenta desde las '+L.fastFrom); }
+const fmin=m=>Math.floor(m/60)+':'+String(Math.floor(m%60)).padStart(2,'0');
+function ringSVG(pct,label,col){
+  return `<svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
+    <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8"/>
+    <circle cx="38" cy="38" r="31" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="195" stroke-dashoffset="${195-195*Math.min(1,pct)}" transform="rotate(-90 38 38)"/>
+    <text x="38" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">${label}</text></svg>`;
+}
 function renderFast(){
-  const t=lastCaloric(), H=S.set.fastH||4;
   const c=document.getElementById('fastcard'), mini=document.getElementById('fastmini');
-  if(!t){ c.innerHTML=`<div class="st">Sin ingestas hoy</div><div class="row"><div style="flex:1"><div class="t">—</div>
-    <div class="s">Registra tu primera comida del día para arrancar el contador de ${H} h.</div></div></div>`;
-    mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">Sin ingestas registradas hoy</b></div>`; return; }
-  const now=new Date(), [hh,mm]=t.split(':').map(Number);
-  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm);
-  let el=(now-start)/60000; if(el<0)el=0;
-  const total=H*60, pct=Math.min(1,el/total), rem=Math.max(0,total-el);
-  const f=m=>Math.floor(m/60)+':'+String(Math.floor(m%60)).padStart(2,'0');
-  const end=new Date(start.getTime()+total*60000);
-  const endS=end.getHours()+':'+String(end.getMinutes()).padStart(2,'0');
-  const s=fastStory(el,total);
+  const st=fastState(), H=S.set.fastH||4, M=S.set.mealMin||20, now=hm2min(nowHM());
+
+  if(st.phase==='none'){
+    c.style.background='linear-gradient(140deg,#7E4E5F,#A76A7E)';
+    c.innerHTML=`<div class="st">Sin ingestas hoy</div><div class="row"><div style="flex:1"><div class="t">—</div>
+      <div class="s">Registra tu primera comida del día para arrancar el contador.</div></div></div>`;
+    mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">Sin ingestas registradas hoy</b></div>`;
+    return;
+  }
+
+  if(st.phase==='meal'){
+    const el=Math.max(0,now-hm2min(st.from)), rem=Math.max(0,M-el);
+    c.style.background='linear-gradient(140deg,#B87A8C,#D79FAE)';
+    c.innerHTML=`<div class="st">🍽️ Comiendo</div>
+      <div class="row">${ringSVG(el/M,fmin(rem).replace(/^0:/,''),'#FFF1F4')}
+        <div style="flex:1"><div class="t">${fmin(el)}</div>
+          <div class="s">de tus ${M} minutos de comida (empezaste ${st.from})</div>
+          <div style="font-size:12px;font-weight:700;color:#FFF1F4;margin-top:8px">Terminas a las ${st.end}</div></div></div>
+      <div class="note">Las señales de saciedad —CCK y PYY— tardan unos ${M} minutos en llegar al cerebro. Comer más rápido que eso es comer de más sin enterarte. Mastica, deja el tenedor entre bocados y respeta el orden: fibra, proteína, carbohidrato.</div>
+      <button class="addbtn" style="margin:14px 0 0;border-color:rgba(255,255,255,.45);color:#fff" onclick="closeMeal()">✓ Ya terminé de comer</button>`;
+    mini.innerHTML=`<div style="font-size:22px">🍽️</div><div style="flex:1"><b style="font-size:13.5px">Comiendo · faltan ${fmin(rem)}</b>
+      <div style="font-size:11px;opacity:.75;margin-top:2px">Termina a las ${st.end}</div></div>`;
+    return;
+  }
+
+  if(st.phase==='await'){
+    c.style.background='linear-gradient(140deg,#8A6472,#B08A98)';
+    c.innerHTML=`<div class="st">Comida terminada</div>
+      <div class="row"><div style="font-size:40px">🔓</div>
+        <div style="flex:1"><div class="t" style="font-size:22px">${st.end}</div>
+          <div class="s">hora en que se cumplieron tus ${M} min de comida</div></div></div>
+      <div class="note">Tu ventana de descanso pancreático no arranca sola: ábrela cuando de verdad hayas dado el último bocado. Contará las ${H} h desde las ${st.end}.</div>
+      <button class="addbtn" style="margin:14px 0 0;border-color:rgba(255,255,255,.5);color:#fff;font-size:14px" onclick="closeMeal('${st.end}')">🔓 Abrir ventana de descanso pancreático</button>
+      <button class="addbtn" style="margin:8px 0 0;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8);font-size:12.5px" onclick="closeMeal()">Sigo comiendo — abrirla ahora (${nowHM()})</button>`;
+    mini.innerHTML=`<div style="font-size:22px">🔓</div><div style="flex:1"><b style="font-size:13.5px">Falta abrir tu ventana de descanso</b>
+      <div style="font-size:11px;opacity:.75;margin-top:2px">Terminaste de comer a las ${st.end}</div></div>`;
+    return;
+  }
+
+  // fase de ayuno
+  c.style.background='linear-gradient(140deg,#7E4E5F,#A76A7E)';
+  const el=Math.max(0,now-hm2min(st.from)), total=H*60, pct=Math.min(1,el/total), rem=Math.max(0,total-el);
+  const endS=addMin(st.from,total), s=fastStory(el,total);
   c.innerHTML=`<div class="st">${s.st}</div>
-   <div class="row">
-    <svg width="76" height="76" viewBox="0 0 76 76" style="flex:0 0 auto">
-      <circle cx="38" cy="38" r="31" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8"/>
-      <circle cx="38" cy="38" r="31" fill="none" stroke="#F7D5DC" stroke-width="8" stroke-linecap="round"
-              stroke-dasharray="195" stroke-dashoffset="${195-195*pct}" transform="rotate(-90 38 38)"/>
-      <text x="38" y="42" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">${Math.round(pct*100)}%</text>
-    </svg>
-    <div style="flex:1"><div class="t">${f(el)}</div>
-      <div class="s">desde tu última ingesta calórica (${t})</div>
-      <div style="font-size:12px;font-weight:700;color:#F7D5DC;margin-top:8px">${pct>=1?'Puedes comer limpio':'Faltan '+f(rem)+' · a las '+endS}</div></div>
+   <div class="row">${ringSVG(pct,Math.round(pct*100)+'%','#F7D5DC')}
+    <div style="flex:1"><div class="t">${fmin(el)}</div>
+      <div class="s">desde que cerraste tu comida (${st.from})</div>
+      <div style="font-size:12px;font-weight:700;color:#F7D5DC;margin-top:8px">${pct>=1?'Puedes comer limpio':'Faltan '+fmin(rem)+' · a las '+endS}</div></div>
    </div>
    <div class="note">${s.n}</div><div class="tip">💡 ${s.tip}</div>`;
-  mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">${s.st} · ${f(el)}</b>
+  mini.innerHTML=`<div style="font-size:22px">⏳</div><div style="flex:1"><b style="font-size:13.5px">${s.st} · ${fmin(el)}</b>
     <div style="font-size:11px;opacity:.75;margin-top:2px">${pct>=1?'Ventana cumplida':'Próxima ingesta limpia a las '+endS}</div></div>`;
 }
 
@@ -1054,10 +1141,10 @@ function renderProg(){
     const r=Math.min(1,done/ringH); if(d){sum+=r;cnt++;}
     const cols=['#F4E7EA','#F7D8DF','#EFB9C7','#E09AAB','#C4718A'];
     const c=done===0?cols[0]:cols[Math.min(4,Math.ceil(r*4))];
-    const el=document.createElement('div'); el.className='hc';
+    const el=document.createElement('div'); el.className='hc'+(S.photos.some(p=>p.date===k)?' pic':'');
     el.style.background=c; el.style.color=r>.5?'#fff':'#C9B4BA';
     el.textContent=parseISO(k).getDate();
-    el.onclick=()=>{VIEW=k;go('hoy');};
+    el.onclick=()=>{ const ph=S.photos.find(p=>p.date===k); if(ph){openPhoto(ph.id);return;} VIEW=k;go('hoy'); };
     heat.appendChild(el);
   }
   document.getElementById('adh-pct').textContent=cnt?Math.round(sum/cnt*100)+'%':'—';
@@ -1120,6 +1207,66 @@ function renderProg(){
     row('Déficit limpio','300 – 400 kcal','var(--rose-d)');
 }
 function row(a,b,c){return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:var(--muted)">${a}</span><b style="color:${c||'inherit'}">${b}</b></div>`;}
+
+/* ---- fotos de progreso ---- */
+function nearestInbody(d){ if(!S.inbody.length)return null;
+  return S.inbody.reduce((a,b)=>Math.abs(daysBetween(b.date,d))<Math.abs(daysBetween(a.date,d))?b:a); }
+document.getElementById('pf-file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=ev=>{ const img=new Image(); img.onload=()=>{
+    const c=document.createElement('canvas'); const sc=Math.min(1,560/Math.max(img.width,img.height));
+    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const data=c.toDataURL('image/jpeg',0.62);
+    S.photos.push({id:Date.now(),date:todayISO(),img:data,note:'',cd:cycleDay(todayISO())});
+    S.photos.sort((a,b)=>a.date<b.date?-1:1);
+    try{ save(); }catch(err){ toast('Sin espacio — borra fotos viejas'); }
+    renderAll(); toast('Foto guardada 📸');
+  }; img.src=ev.target.result; };
+  r.readAsDataURL(f); e.target.value='';
+});
+function renderPhotos(){
+  const ps=[...S.photos].sort((a,b)=>a.date<b.date?1:-1);
+  const cmp=document.getElementById('photo-compare');
+  if(S.photos.length>=2){
+    const a=S.photos[0], b=S.photos[S.photos.length-1];
+    const ia=nearestInbody(a.date), ib=nearestInbody(b.date);
+    const dd=daysBetween(a.date,b.date);
+    cmp.innerHTML=`<div class="card"><div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px">Antes y ahora · ${dd} días</div>
+      <div class="cmp">
+        <div><img src="${a.img}"><span>${fmtShort(a.date)}${ia?'<br>'+ia.pbf+'% grasa':''}</span></div>
+        <div><img src="${b.img}"><span>${fmtShort(b.date)}${ib?'<br>'+ib.pbf+'% grasa':''}</span></div>
+      </div></div>`;
+  } else cmp.innerHTML='';
+
+  const el=document.getElementById('photos');
+  if(!ps.length){ el.innerHTML=`<div class="card" style="font-size:12.5px;color:var(--muted);line-height:1.6">
+    Aún no hay fotos. Para que la comparación sirva de algo: mismo espejo, misma luz, misma ropa, misma hora del día — y de preferencia <b>el mismo día de tu ciclo</b>, porque en fase lútea retienes líquido y la foto miente.</div>`; return; }
+  const groups=[];
+  ps.forEach(p=>{ const d=parseISO(p.date), m=MON[d.getMonth()]+' '+d.getFullYear();
+    let g=groups.find(x=>x.m===m); if(!g){ g={m,items:[]}; groups.push(g); } g.items.push(p); });
+  el.innerHTML=groups.map(g=>`<div class="pmonth">${g.m}</div><div class="pgrid">`+
+    g.items.map(p=>{ const d=parseISO(p.date);
+      return `<div class="pg" onclick="openPhoto(${p.id})"><img src="${p.img}">
+        <div class="cap">${d.getDate()} ${MON[d.getMonth()].slice(0,3)}${p.cd?' · d'+p.cd:''}</div></div>`;
+    }).join('')+`</div>`).join('');
+}
+let PEDIT=null;
+function openPhoto(id){
+  const p=S.photos.find(x=>x.id===id); if(!p)return; PEDIT=p;
+  const ib=nearestInbody(p.date);
+  document.getElementById('pf-t').textContent=fmtDate(p.date);
+  document.getElementById('pf-k').textContent=(p.cd?'Día '+p.cd+' del ciclo · '+phaseOf(p.cd).name:'');
+  document.getElementById('pf-img').src=p.img;
+  document.getElementById('pf-meta').innerHTML=ib?`<div class="card t-blush" style="margin:0">
+    <div style="font-size:11px;color:#8a5a68;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">InBody más cercano · ${fmtShort(ib.date)}</div>
+    ${row('Peso',ib.w+' kg')}${row('Músculo SMM',ib.smm+' kg')}${row('% grasa',ib.pbf+'%')}</div>`:'';
+  document.getElementById('pf-note').value=p.note||'';
+  openSheet('sheet-pf');
+}
+function savePhotoNote(){ if(!PEDIT)return; PEDIT.note=document.getElementById('pf-note').value; save(); closeSheets(); toast('Nota guardada'); }
+function deletePhoto(){ if(!PEDIT)return; if(!confirm('¿Eliminar la foto del '+fmtDate(PEDIT.date)+'?'))return;
+  S.photos=S.photos.filter(x=>x.id!==PEDIT.id); save(); closeSheets(); renderAll(); toast('Foto eliminada'); }
 function delInbody(d){ if(!confirm('¿Eliminar la medición del '+fmtDate(d)+'?'))return; S.inbody=S.inbody.filter(x=>x.date!==d); save(); renderAll(); }
 
 /* ============ COMIDAS ============ */
@@ -1437,7 +1584,8 @@ function fillSettings(){
   document.getElementById('s-clen').value=S.set.clen; document.getElementById('s-bleed').value=S.set.bleed;
   document.getElementById('s-prot').value=S.set.prot; document.getElementById('s-kcal').value=S.set.kcal;
   document.getElementById('s-steps').value=S.set.steps; document.getElementById('s-water').value=S.set.waterQ/4;
-  document.getElementById('s-fast').value=S.set.fastH; document.getElementById('s-wday').value=S.set.wday;
+  document.getElementById('s-fast').value=S.set.fastH; document.getElementById('s-meal').value=S.set.mealMin;
+  document.getElementById('s-wday').value=S.set.wday;
   document.getElementById('s-wdose').value=S.set.wdose;
   document.getElementById('s-sync').classList.toggle('on',!!S.set.sync);
   document.getElementById('s-synccyc').classList.toggle('on',!!S.set.synccyc);
@@ -1452,6 +1600,7 @@ function saveSettings(){
   S.set.steps=+document.getElementById('s-steps').value||5120;
   S.set.waterQ=Math.round((+document.getElementById('s-water').value||2.5)*4);
   S.set.fastH=+document.getElementById('s-fast').value||4;
+  S.set.mealMin=+document.getElementById('s-meal').value||20;
   S.set.wday=+document.getElementById('s-wday').value;
   S.set.wdose=document.getElementById('s-wdose').value||'0.25 mg';
   S.set.sync=document.getElementById('s-sync').classList.contains('on')?1:0;
@@ -1487,7 +1636,7 @@ function go(p){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle(
   document.getElementById('p-'+p).classList.add('on'); document.getElementById('scroll').scrollTop=0; renderAll(); }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>go(t.dataset.p));
 
-function renderAll(){ renderHoy(); renderCiclo(); renderProg(); renderCom(); renderLearn(); }
+function renderAll(){ renderHoy(); renderCiclo(); renderProg(); renderPhotos(); renderCom(); renderLearn(); }
 
 /* --- ingesta de datos de Salud vía parámetros de URL (lo que manda el Atajo) --- */
 (function ingestURL(){
